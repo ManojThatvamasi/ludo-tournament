@@ -6,6 +6,11 @@
     <title>MC Boys LUDO Tournament</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -400,9 +405,52 @@
             flex-direction: column;
         }
         
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
-            /* Points Table Mobile Fix */
             .points-table-container {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
@@ -418,20 +466,10 @@
                 padding: 12px 8px;
             }
             
-            .points-table th:nth-child(3),
-            .points-table td:nth-child(3) {
-                max-width: 150px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-            
-            /* Tab Content Padding */
             .tab-content {
                 padding: 20px 15px;
             }
             
-            /* Header Fix */
             .header {
                 flex-direction: column;
                 gap: 15px;
@@ -441,7 +479,6 @@
                 font-size: 1.8rem;
             }
             
-            /* Match Cards Mobile Fix */
             .match-card {
                 padding: 15px;
                 flex-direction: column;
@@ -458,19 +495,16 @@
                 font-size: 0.8rem;
             }
             
-            /* Team Cards Mobile Fix */
             .team-card {
                 flex-direction: column;
                 gap: 10px;
                 text-align: center;
             }
             
-            /* Form Controls Mobile Fix */
             .form-control {
-                font-size: 16px; /* Prevents zoom on iOS */
+                font-size: 16px;
             }
             
-            /* Action Buttons Mobile Fix */
             .action-buttons {
                 flex-direction: column;
                 width: 100%;
@@ -534,6 +568,11 @@
             <button class="btn" id="loginBtn" style="width: 100%;">
                 <i class="fas fa-sign-in-alt"></i> Login
             </button>
+            
+            <div id="loginHelp" class="loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading passwords from database...</p>
+            </div>
         </div>
     </div>
     
@@ -545,6 +584,9 @@
                 <p>Season -1 2025 - Competitive LUDO Championship</p>
             </div>
             <div class="user-info">
+                <span id="connectionStatus" style="background: var(--success); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; display: none;">
+                    <i class="fas fa-cloud"></i> Real-Time
+                </span>
                 <span id="userRoleDisplay"></span>
                 <button class="btn btn-warning" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -588,7 +630,7 @@
             <div class="card">
                 <h3 class="card-title"><i class="fas fa-trophy"></i> Current Leader</h3>
                 <div id="currentLeader" style="font-size: 1.2rem; font-weight: bold; color: var(--primary); margin: 10px 0;">
-                    Loading...
+                    No teams yet
                 </div>
             </div>
         </div>
@@ -596,8 +638,15 @@
         <!-- Points Table Tab -->
         <div id="points" class="tab-content active">
             <h2>📊 Tournament Points Table</h2>
+            
+            <div id="points-empty" class="empty-state" style="display: none;">
+                <i class="fas fa-users"></i>
+                <h3>No Teams Yet</h3>
+                <p>Add teams in the Admin Panel to get started</p>
+            </div>
+            
             <div class="points-table-container">
-                <table class="points-table">
+                <table class="points-table" id="points-table" style="display: none;">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -626,18 +675,26 @@
         <div id="schedule" class="tab-content">
             <h2>📅 Tournament Matches</h2>
             
+            <div id="matches-empty" class="empty-state" style="display: none;">
+                <i class="fas fa-calendar-times"></i>
+                <h3>No Matches Scheduled</h3>
+                <p>Add matches between teams to create the tournament schedule</p>
+            </div>
+            
             <div class="admin-controls admin-only">
                 <h3><i class="fas fa-plus-circle"></i> Add New Match</h3>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Team 1</label>
                         <select id="newTeam1" class="form-control">
+                            <option value="">Select Team 1</option>
                             <!-- Teams will be populated by JavaScript -->
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Team 2</label>
                         <select id="newTeam2" class="form-control">
+                            <option value="">Select Team 2</option>
                             <!-- Teams will be populated by JavaScript -->
                         </select>
                     </div>
@@ -647,7 +704,7 @@
                 </button>
             </div>
             
-            <div class="admin-controls admin-only">
+            <div class="admin-controls admin-only" id="reorder-controls" style="display: none;">
                 <h3><i class="fas fa-sort"></i> Reorder Matches</h3>
                 <p>Drag and drop matches to rearrange the schedule</p>
                 <button class="btn btn-warning" onclick="saveMatchOrder()">
@@ -683,6 +740,12 @@
                     <i class="fas fa-plus"></i> Add Team
                 </button>
                 
+                <div id="teams-empty" class="empty-state" style="display: none;">
+                    <i class="fas fa-user-plus"></i>
+                    <h3>No Teams Added Yet</h3>
+                    <p>Start by adding your first team above</p>
+                </div>
+                
                 <div id="teams-list" style="margin-top: 15px;">
                     <!-- Teams list will be populated by JavaScript -->
                 </div>
@@ -703,6 +766,9 @@
                 <button class="btn btn-warning" onclick="updatePasswords()">
                     <i class="fas fa-save"></i> Update Passwords
                 </button>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: var(--gray);">
+                    <i class="fas fa-info-circle"></i> Passwords are securely stored in the database
+                </p>
             </div>
             
             <div class="card">
@@ -722,83 +788,165 @@
     </div>
 
     <script>
-        // Tournament data structure
+        // ==================== FIREBASE CONFIGURATION ====================
+        // 🔥 REPLACE THIS WITH YOUR ACTUAL FIREBASE CONFIG
+       // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAQDJbWsCDbgKMdmMZ8Rz_QmTo-kW6ZdHM",
+  authDomain: "ludo-tournament-d6e32.firebaseapp.com",
+  projectId: "ludo-tournament-d6e32",
+  storageBucket: "ludo-tournament-d6e32.firebasestorage.app",
+  messagingSenderId: "245161933582",
+  appId: "1:245161933582:web:9d18c5bfc74a41f705b55f",
+  measurementId: "G-3R2EZR2HK9"
+};
+
+        // Initialize Firebase
+        let db = null;
+        let isFirebaseConnected = false;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            isFirebaseConnected = true;
+            console.log('🔥 Firebase connected successfully');
+            document.getElementById('connectionStatus').style.display = 'inline-block';
+        } catch (error) {
+            console.log('📱 Firebase not configured, using local storage');
+        }
+
+        // ==================== TOURNAMENT DATA STRUCTURE ====================
         let tournamentData = {
-            teams: [
-                { id: 1, name: "Team Thunder", player1: "Player A", player2: "Player B", matches: 0, wins: 0, losses: 0, points: 0 },
-                { id: 2, name: "LUDO Legends", player1: "Player C", player2: "Player D", matches: 0, wins: 0, losses: 0, points: 0 },
-                { id: 3, name: "Dice Masters", player1: "Player E", player2: "Player F", matches: 0, wins: 0, losses: 0, points: 0 }
-            ],
-            matches: [
-                { id: 1, team1: 1, team2: 2, winner: null, completed: false },
-                { id: 2, team1: 2, team2: 3, winner: null, completed: false },
-                { id: 3, team1: 3, team2: 1, winner: null, completed: false }
-            ],
+            teams: [],
+            matches: [],
             passwords: {
-                admin: "lUdOAdMin@753159",
-                viewer: "view123"
+                admin: "", // WILL BE SET FROM DATABASE
+                viewer: "" // WILL BE SET FROM DATABASE
             },
-            nextTeamId: 4,
-            nextMatchId: 4
+            nextTeamId: 1,
+            nextMatchId: 1
         };
 
         let currentUser = null;
         let isDragging = false;
         let draggedElement = null;
+        let passwordsLoaded = false;
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            setupEventListeners();
-            checkAuthentication();
-        });
-
-        // Event listeners setup
-        function setupEventListeners() {
-            // Role selection
-            document.getElementById('viewerRole').addEventListener('click', () => selectRole('viewer'));
-            document.getElementById('adminRole').addEventListener('click', () => selectRole('admin'));
-            
-            // Login
-            document.getElementById('loginBtn').addEventListener('click', login);
-            document.getElementById('password').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') login();
-            });
-            
-            // Logout
-            document.getElementById('logoutBtn').addEventListener('click', logout);
+        // ==================== FIREBASE DATA MANAGEMENT ====================
+        async function saveData() {
+            if (db && isFirebaseConnected) {
+                try {
+                    await db.collection('tournament').doc('data').set(tournamentData);
+                    console.log('✅ Data saved to Firebase');
+                } catch (error) {
+                    console.error('❌ Firebase error:', error);
+                    localStorage.setItem('ludoTournamentData', JSON.stringify(tournamentData));
+                }
+            } else {
+                localStorage.setItem('ludoTournamentData', JSON.stringify(tournamentData));
+            }
+            updateAllDisplays();
         }
 
-        // Role selection
-        function selectRole(role) {
-            document.getElementById('viewerRole').classList.toggle('active', role === 'viewer');
-            document.getElementById('adminRole').classList.toggle('active', role === 'admin');
+        function loadData() {
+            if (db && isFirebaseConnected) {
+                showLoadingMessage('Loading from database...');
+                
+                // First, try to get existing data
+                db.collection('tournament').doc('data').get().then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        tournamentData = data;
+                        passwordsLoaded = true;
+                        hideLoadingMessage();
+                        console.log('✅ Passwords loaded from Firebase');
+                        updateAllDisplays();
+                    } else {
+                        // No data exists - initialize with empty passwords
+                        initializeFirstTimeData();
+                    }
+                }).catch((error) => {
+                    console.error('Error loading data:', error);
+                    loadFromLocalStorage();
+                });
+            } else {
+                loadFromLocalStorage();
+            }
         }
 
-        // Authentication functions
+        function initializeFirstTimeData() {
+            // First time setup - set initial passwords
+            tournamentData.passwords = {
+                admin: "admin123", // Initial admin password
+                viewer: "view123"  // Initial viewer password
+            };
+            passwordsLoaded = true;
+            saveData(); // Save to Firebase
+            hideLoadingMessage();
+            console.log('🎯 First-time data initialized with default passwords');
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('ludoTournamentData');
+            if (saved) {
+                tournamentData = JSON.parse(saved);
+                passwordsLoaded = true;
+            } else {
+                // First time using local storage
+                tournamentData.passwords = {
+                    admin: "admin123",
+                    viewer: "view123"
+                };
+                passwordsLoaded = true;
+                saveData();
+            }
+            hideLoadingMessage();
+            updateAllDisplays();
+        }
+
+        function showLoadingMessage(message) {
+            document.getElementById('loginHelp').style.display = 'block';
+            document.getElementById('loginHelp').innerHTML = `<i class="fas fa-spinner fa-spin"></i><p>${message}</p>`;
+        }
+
+        function hideLoadingMessage() {
+            document.getElementById('loginHelp').style.display = 'none';
+        }
+
+        // ==================== AUTHENTICATION SYSTEM ====================
         function checkAuthentication() {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
-                showApp();
+                // Wait for passwords to load before showing app
+                if (passwordsLoaded) {
+                    showApp();
+                } else {
+                    // If passwords not loaded yet, wait for them
+                    setTimeout(checkAuthentication, 100);
+                }
             }
         }
 
         function login() {
+            if (!passwordsLoaded) {
+                alert('System still loading. Please wait...');
+                return;
+            }
+
             const role = document.getElementById('viewerRole').classList.contains('active') ? 'viewer' : 'admin';
             const password = document.getElementById('password').value;
             
-            if (password === tournamentData.passwords[role]) {
+            // Get password from database (tournamentData.passwords)
+            const storedPassword = tournamentData.passwords[role];
+            
+            if (!storedPassword) {
+                alert('Password not set in database. Please contact administrator.');
+                return;
+            }
+            
+            if (password === storedPassword) {
                 currentUser = { role, loginTime: new Date().toISOString() };
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                
-                // Redirect based on role
-                if (role === 'viewer') {
-                    document.getElementById('pointsTab').click();
-                } else {
-                    document.getElementById('pointsTab').click();
-                }
-                
                 showApp();
             } else {
                 alert('Invalid password! Please try again.');
@@ -822,271 +970,49 @@
             document.getElementById('appContainer').style.display = 'block';
             document.getElementById('userRoleDisplay').textContent = `Logged in as ${currentUser.role}`;
             
-            // Show/hide admin elements based on role
             document.querySelectorAll('.admin-only').forEach(el => {
                 el.style.display = currentUser.role === 'admin' ? 'block' : 'none';
             });
             
-            // Hide admin tab for viewers
             document.getElementById('adminTab').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
+            updateAllDisplays();
+        }
+
+        // ==================== PASSWORD MANAGEMENT ====================
+        function updatePasswords() {
+            const adminPass = document.getElementById('adminPassword').value;
+            const viewerPass = document.getElementById('viewerPassword').value;
             
-            updateAllDisplays();
-        }
-
-        // Data management
-        function loadData() {
-            const saved = localStorage.getItem('ludoTournamentData');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                tournamentData = { ...tournamentData, ...parsed };
+            if (adminPass) {
+                if (adminPass.length < 4) {
+                    alert('Admin password must be at least 4 characters long');
+                    return;
+                }
+                tournamentData.passwords.admin = adminPass;
             }
-        }
-
-        function saveData() {
-            localStorage.setItem('ludoTournamentData', JSON.stringify(tournamentData));
-            updateAllDisplays();
-        }
-
-        // Tab navigation
-        function showTab(tabName) {
-            if (tabName === 'admin' && currentUser.role !== 'admin') {
-                alert('Admin access required!');
+            
+            if (viewerPass) {
+                if (viewerPass.length < 4) {
+                    alert('Viewer password must be at least 4 characters long');
+                    return;
+                }
+                tournamentData.passwords.viewer = viewerPass;
+            }
+            
+            if (!adminPass && !viewerPass) {
+                alert('Please enter at least one new password');
                 return;
             }
             
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('viewerPassword').value = '';
             
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            document.getElementById(tabName).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
-
-        // Update all displays
-        function updateAllDisplays() {
-            updatePointsTable();
-            updateMatchesDisplay();
-            updateTeamsList();
-            updateLeaderDisplay();
-            updateTeamSelects();
-        }
-
-        function updatePointsTable() {
-            const tbody = document.getElementById('points-table-body');
-            tbody.innerHTML = '';
-
-            const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
-            
-            sortedTeams.forEach((team, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${team.name}</td>
-                    <td>${team.player1}, ${team.player2}</td>
-                    <td>${team.matches}</td>
-                    <td>${team.wins}</td>
-                    <td>${team.losses}</td>
-                    <td class="team-points">${team.points}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function updateMatchesDisplay() {
-            const container = document.getElementById('matches-container');
-            container.innerHTML = '';
-
-            tournamentData.matches.forEach(match => {
-                const team1 = tournamentData.teams.find(t => t.id === match.team1);
-                const team2 = tournamentData.teams.find(t => t.id === match.team2);
-                
-                // Check if teams exist (in case of deletion)
-                if (!team1 || !team2) {
-                    const matchCard = document.createElement('div');
-                    matchCard.className = 'match-card';
-                    matchCard.innerHTML = `
-                        <div>
-                            <div class="match-teams">
-                                <span class="team-name">Team Deleted</span>
-                                <span class="vs">VS</span>
-                                <span class="team-name">Team Deleted</span>
-                            </div>
-                        </div>
-                        <div>
-                            <span class="match-status status-abandoned">❌ Abandoned</span>
-                        </div>
-                    `;
-                    container.appendChild(matchCard);
-                    return;
-                }
-                
-                const matchCard = document.createElement('div');
-                matchCard.className = 'match-card';
-                matchCard.setAttribute('data-match-id', match.id);
-                matchCard.draggable = currentUser.role === 'admin';
-                
-                let status = '<span class="match-status status-pending">⏳ Pending</span>';
-                let winnerInfo = '';
-                
-                if (match.completed) {
-                    const winner = tournamentData.teams.find(t => t.id === match.winner);
-                    status = `<span class="match-status status-completed">✅ Completed</span>`;
-                    winnerInfo = `<div style="margin-top: 10px; color: var(--success);"><strong>Winner: ${winner.name}</strong></div>`;
-                }
-                
-                matchCard.innerHTML = `
-                    <div class="drag-handle admin-only" style="display: ${currentUser.role === 'admin' ? 'block' : 'none'}">
-                        <i class="fas fa-grip-vertical"></i>
-                    </div>
-                    <div style="flex: 1;">
-                        <div class="match-teams">
-                            <span class="team-name">${team1.name}</span>
-                            <span class="vs">VS</span>
-                            <span class="team-name">${team2.name}</span>
-                        </div>
-                        <div class="team-players">
-                            ${team1.player1}, ${team1.player2} vs ${team2.player1}, ${team2.player2}
-                        </div>
-                        ${winnerInfo}
-                    </div>
-                    <div class="match-actions">
-                        ${status}
-                        ${currentUser.role === 'admin' && !match.completed ? `
-                            <select id="winner-${match.id}" class="form-control" style="margin-bottom: 5px;">
-                                <option value="">Select Winner</option>
-                                <option value="${team1.id}">${team1.name}</option>
-                                <option value="${team2.id}">${team2.name}</option>
-                            </select>
-                            <button class="btn btn-sm" onclick="updateMatchResult(${match.id})">
-                                <i class="fas fa-check"></i> Set Result
-                            </button>
-                        ` : ''}
-                        ${currentUser.role === 'admin' ? `
-                            <button class="btn btn-danger btn-sm" onclick="deleteMatch(${match.id})">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-                
-                // Add drag events for admin
-                if (currentUser.role === 'admin') {
-                    matchCard.addEventListener('dragstart', handleDragStart);
-                    matchCard.addEventListener('dragover', handleDragOver);
-                    matchCard.addEventListener('drop', handleDrop);
-                    matchCard.addEventListener('dragend', handleDragEnd);
-                }
-                
-                container.appendChild(matchCard);
-            });
-        }
-
-        function updateTeamsList() {
-            const container = document.getElementById('teams-list');
-            container.innerHTML = '';
-            
-            tournamentData.teams.forEach(team => {
-                const teamEl = document.createElement('div');
-                teamEl.className = 'team-card';
-                teamEl.innerHTML = `
-                    <div>
-                        <div style="font-weight: bold;">${team.name}</div>
-                        <div class="team-players">${team.player1}, ${team.player2}</div>
-                        <div style="margin-top: 5px; font-size: 0.9rem;">
-                            <span style="margin-right: 10px;">Matches: ${team.matches}</span>
-                            <span style="margin-right: 10px;">Wins: ${team.wins}</span>
-                            <span>Points: ${team.points}</span>
-                        </div>
-                    </div>
-                    <div class="action-buttons">
-                        <button class="btn btn-warning btn-sm" onclick="editTeam(${team.id})">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteTeam(${team.id})">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                `;
-                container.appendChild(teamEl);
-            });
-        }
-
-        function updateLeaderDisplay() {
-            const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
-            const leader = sortedTeams[0];
-            document.getElementById('currentLeader').textContent = 
-                leader ? `${leader.name} (${leader.points} points)` : 'No matches played yet';
-        }
-
-        function updateTeamSelects() {
-            const selects = ['newTeam1', 'newTeam2'];
-            selects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                select.innerHTML = '';
-                tournamentData.teams.forEach(team => {
-                    const option = document.createElement('option');
-                    option.value = team.id;
-                    option.textContent = team.name;
-                    select.appendChild(option);
-                });
-            });
-        }
-
-        // Drag and drop functions for match reordering
-        function handleDragStart(e) {
-            isDragging = true;
-            draggedElement = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-            this.style.opacity = '0.4';
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
-        function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-            
-            if (draggedElement !== this) {
-                draggedElement.innerHTML = this.innerHTML;
-                this.innerHTML = e.dataTransfer.getData('text/html');
-                
-                // Update the data model
-                const fromIndex = Array.from(this.parentNode.children).indexOf(draggedElement);
-                const toIndex = Array.from(this.parentNode.children).indexOf(this);
-                
-                // Swap matches in the array
-                const temp = tournamentData.matches[fromIndex];
-                tournamentData.matches[fromIndex] = tournamentData.matches[toIndex];
-                tournamentData.matches[toIndex] = temp;
-            }
-            
-            return false;
-        }
-
-        function handleDragEnd(e) {
-            this.style.opacity = '1';
-            isDragging = false;
-            draggedElement = null;
-        }
-
-        function saveMatchOrder() {
             saveData();
-            alert('Match order saved successfully!');
+            alert('Passwords updated successfully in database!');
         }
 
-        // Admin functions
+        // ==================== REST OF YOUR FUNCTIONS ====================
+        // Team management functions
         function addNewTeam() {
             const nameInput = document.getElementById('newTeamName');
             const player1Input = document.getElementById('player1Name');
@@ -1101,7 +1027,6 @@
                 return;
             }
             
-            // Check for duplicate team name
             if (tournamentData.teams.some(team => team.name.toLowerCase() === name.toLowerCase())) {
                 alert('Team name already exists! Please choose a different name.');
                 return;
@@ -1137,7 +1062,6 @@
             const newPlayer2 = prompt('Enter Player 2 name:', team.player2);
             if (newPlayer2 === null) return;
             
-            // Check for duplicate team name (excluding current team)
             if (tournamentData.teams.some(t => t.id !== teamId && t.name.toLowerCase() === newName.toLowerCase())) {
                 alert('Team name already exists! Please choose a different name.');
                 return;
@@ -1151,44 +1075,46 @@
         }
 
         function deleteTeam(teamId) {
-            if (!confirm('Are you sure you want to delete this team? This will affect all matches involving this team.')) {
+            if (!confirm('Are you sure you want to delete this team? This will also delete all matches involving this team.')) {
                 return;
             }
             
-            // Remove team from teams array
             tournamentData.teams = tournamentData.teams.filter(team => team.id !== teamId);
-            
-            // Remove matches involving this team
             tournamentData.matches = tournamentData.matches.filter(match => match.team1 !== teamId && match.team2 !== teamId);
-            
             saveData();
         }
 
+        // Match management functions
         function addNewMatch() {
             const team1 = parseInt(document.getElementById('newTeam1').value);
             const team2 = parseInt(document.getElementById('newTeam2').value);
             
-            if (team1 && team2 && team1 !== team2) {
-                // Check if match already exists
-                if (tournamentData.matches.some(m => 
-                    (m.team1 === team1 && m.team2 === team2) || 
-                    (m.team1 === team2 && m.team2 === team1))) {
-                    alert('This match already exists!');
-                    return;
-                }
-                
-                tournamentData.matches.push({
-                    id: tournamentData.nextMatchId++,
-                    team1,
-                    team2,
-                    winner: null,
-                    completed: false
-                });
-                
-                saveData();
-            } else {
-                alert('Please select two different teams');
+            if (!team1 || !team2) {
+                alert('Please select both teams');
+                return;
             }
+            
+            if (team1 === team2) {
+                alert('Please select two different teams');
+                return;
+            }
+            
+            if (tournamentData.matches.some(m => 
+                (m.team1 === team1 && m.team2 === team2) || 
+                (m.team1 === team2 && m.team2 === team1))) {
+                alert('This match already exists!');
+                return;
+            }
+            
+            tournamentData.matches.push({
+                id: tournamentData.nextMatchId++,
+                team1,
+                team2,
+                winner: null,
+                completed: false
+            });
+            
+            saveData();
         }
 
         function deleteMatch(matchId) {
@@ -1198,7 +1124,6 @@
             
             const match = tournamentData.matches.find(m => m.id === matchId);
             if (match && match.completed) {
-                // Reverse the stats if completed
                 const winner = tournamentData.teams.find(t => t.id === match.winner);
                 const loserId = match.team1 === match.winner ? match.team2 : match.team1;
                 const loser = tournamentData.teams.find(t => t.id === loserId);
@@ -1228,17 +1153,14 @@
             const match = tournamentData.matches.find(m => m.id === matchId);
             if (!match) return;
             
-            // Prevent updating if already completed
             if (match.completed) {
                 alert('This match result has already been set and cannot be changed.');
                 return;
             }
             
-            // Update match
             match.winner = winnerId;
             match.completed = true;
             
-            // Update teams
             const winner = tournamentData.teams.find(t => t.id === winnerId);
             const loser = tournamentData.teams.find(t => t.id === (match.team1 === winnerId ? match.team2 : match.team1));
             
@@ -1252,39 +1174,271 @@
             saveData();
         }
 
-        function updatePasswords() {
-            const adminPass = document.getElementById('adminPassword').value;
-            const viewerPass = document.getElementById('viewerPassword').value;
-            
-            if (adminPass) tournamentData.passwords.admin = adminPass;
-            if (viewerPass) tournamentData.passwords.viewer = viewerPass;
-            
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('viewerPassword').value = '';
-            
-            saveData();
-            alert('Passwords updated successfully!');
-        }
-
+        // Tournament operations
         function resetTournament() {
             if (confirm('Are you sure you want to reset all tournament data? This will delete all teams, matches, and reset everything!')) {
                 tournamentData = {
                     teams: [],
                     matches: [],
-                    passwords: {
-                        admin: "lUdOAdMin@753159",
-                        viewer: "view123"
-                    },
+                    passwords: tournamentData.passwords, // Keep current passwords
                     nextTeamId: 1,
                     nextMatchId: 1
                 };
                 saveData();
-                alert('Tournament has been fully reset!');
             }
+        }
+
+        // Display functions
+        function updateAllDisplays() {
+            updatePointsTable();
+            updateMatchesDisplay();
+            updateTeamsList();
+            updateLeaderDisplay();
+            updateTeamSelects();
+        }
+
+        function updatePointsTable() {
+            const tbody = document.getElementById('points-table-body');
+            const pointsTable = document.getElementById('points-table');
+            const emptyState = document.getElementById('points-empty');
+            
+            tbody.innerHTML = '';
+
+            if (tournamentData.teams.length === 0) {
+                pointsTable.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            pointsTable.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
+            
+            sortedTeams.forEach((team, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${team.name}</td>
+                    <td>${team.player1}, ${team.player2}</td>
+                    <td>${team.matches}</td>
+                    <td>${team.wins}</td>
+                    <td>${team.losses}</td>
+                    <td class="team-points">${team.points}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateMatchesDisplay() {
+            const container = document.getElementById('matches-container');
+            const emptyState = document.getElementById('matches-empty');
+            const reorderControls = document.getElementById('reorder-controls');
+            
+            container.innerHTML = '';
+
+            if (tournamentData.matches.length === 0) {
+                emptyState.style.display = 'block';
+                reorderControls.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            reorderControls.style.display = currentUser?.role === 'admin' ? 'block' : 'none';
+
+            tournamentData.matches.forEach(match => {
+                const team1 = tournamentData.teams.find(t => t.id === match.team1);
+                const team2 = tournamentData.teams.find(t => t.id === match.team2);
+                
+                if (!team1 || !team2) {
+                    const matchCard = document.createElement('div');
+                    matchCard.className = 'match-card';
+                    matchCard.innerHTML = `
+                        <div>
+                            <div class="match-teams">
+                                <span class="team-name">Team Deleted</span>
+                                <span class="vs">VS</span>
+                                <span class="team-name">Team Deleted</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="match-status status-abandoned">❌ Abandoned</span>
+                        </div>
+                    `;
+                    container.appendChild(matchCard);
+                    return;
+                }
+                
+                const matchCard = document.createElement('div');
+                matchCard.className = 'match-card';
+                matchCard.setAttribute('data-match-id', match.id);
+                matchCard.draggable = currentUser?.role === 'admin';
+                
+                let status = '<span class="match-status status-pending">⏳ Pending</span>';
+                let winnerInfo = '';
+                
+                if (match.completed) {
+                    const winner = tournamentData.teams.find(t => t.id === match.winner);
+                    status = `<span class="match-status status-completed">✅ Completed</span>`;
+                    winnerInfo = `<div style="margin-top: 10px; color: var(--success);"><strong>Winner: ${winner.name}</strong></div>`;
+                }
+                
+                matchCard.innerHTML = `
+                    <div class="drag-handle admin-only" style="display: ${currentUser?.role === 'admin' ? 'block' : 'none'}">
+                        <i class="fas fa-grip-vertical"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="match-teams">
+                            <span class="team-name">${team1.name}</span>
+                            <span class="vs">VS</span>
+                            <span class="team-name">${team2.name}</span>
+                        </div>
+                        <div class="team-players">
+                            ${team1.player1}, ${team1.player2} vs ${team2.player1}, ${team2.player2}
+                        </div>
+                        ${winnerInfo}
+                    </div>
+                    <div class="match-actions">
+                        ${status}
+                        ${currentUser?.role === 'admin' && !match.completed ? `
+                            <select id="winner-${match.id}" class="form-control" style="margin-bottom: 5px;">
+                                <option value="">Select Winner</option>
+                                <option value="${team1.id}">${team1.name}</option>
+                                <option value="${team2.id}">${team2.name}</option>
+                            </select>
+                            <button class="btn btn-sm" onclick="updateMatchResult(${match.id})">
+                                <i class="fas fa-check"></i> Set Result
+                            </button>
+                        ` : ''}
+                        ${currentUser?.role === 'admin' ? `
+                            <button class="btn btn-danger btn-sm" onclick="deleteMatch(${match.id})">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                if (currentUser?.role === 'admin') {
+                    matchCard.addEventListener('dragstart', handleDragStart);
+                    matchCard.addEventListener('dragover', handleDragOver);
+                    matchCard.addEventListener('drop', handleDrop);
+                    matchCard.addEventListener('dragend', handleDragEnd);
+                }
+                
+                container.appendChild(matchCard);
+            });
+        }
+
+        function updateTeamsList() {
+            const container = document.getElementById('teams-list');
+            const emptyState = document.getElementById('teams-empty');
+            
+            container.innerHTML = '';
+
+            if (tournamentData.teams.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            
+            tournamentData.teams.forEach(team => {
+                const teamEl = document.createElement('div');
+                teamEl.className = 'team-card';
+                teamEl.innerHTML = `
+                    <div>
+                        <div style="font-weight: bold;">${team.name}</div>
+                        <div class="team-players">${team.player1}, ${team.player2}</div>
+                        <div style="margin-top: 5px; font-size: 0.9rem;">
+                            <span style="margin-right: 10px;">Matches: ${team.matches}</span>
+                            <span style="margin-right: 10px;">Wins: ${team.wins}</span>
+                            <span>Points: ${team.points}</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-warning btn-sm" onclick="editTeam(${team.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteTeam(${team.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                `;
+                container.appendChild(teamEl);
+            });
+        }
+
+        function updateLeaderDisplay() {
+            const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
+            const leader = sortedTeams[0];
+            document.getElementById('currentLeader').textContent = 
+                leader ? `${leader.name} (${leader.points} points)` : 'No teams yet';
+        }
+
+        function updateTeamSelects() {
+            const selects = ['newTeam1', 'newTeam2'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Select Team</option>';
+                tournamentData.teams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // Drag & drop functions
+        function handleDragStart(e) {
+            isDragging = true;
+            draggedElement = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            this.style.opacity = '0.4';
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) e.stopPropagation();
+            
+            if (draggedElement !== this) {
+                draggedElement.innerHTML = this.innerHTML;
+                this.innerHTML = e.dataTransfer.getData('text/html');
+                
+                const fromIndex = Array.from(this.parentNode.children).indexOf(draggedElement);
+                const toIndex = Array.from(this.parentNode.children).indexOf(this);
+                
+                const temp = tournamentData.matches[fromIndex];
+                tournamentData.matches[fromIndex] = tournamentData.matches[toIndex];
+                tournamentData.matches[toIndex] = temp;
+            }
+            
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.style.opacity = '1';
+            isDragging = false;
+            draggedElement = null;
+        }
+
+        function saveMatchOrder() {
+            saveData();
         }
 
         // Export/Import functions
         function downloadPointsTable() {
+            if (tournamentData.teams.length === 0) {
+                alert('No teams to download');
+                return;
+            }
+
             const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
             
             const data = sortedTeams.map((team, index) => ({
@@ -1301,13 +1455,20 @@
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Points Table");
-            
             XLSX.writeFile(wb, 'ludo_tournament_points.xlsx');
         }
 
         function exportTournamentData() {
             const dataStr = JSON.stringify(tournamentData, null, 2);
-            downloadFile(dataStr, 'ludo_tournament_data.json', 'application/json');
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ludo_tournament_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         }
 
         function importTournamentData() {
@@ -1332,17 +1493,47 @@
             }
         });
 
-        function downloadFile(content, fileName, contentType) {
-            const blob = new Blob([content], { type: contentType });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+        // Tab navigation
+        function showTab(tabName) {
+            if (tabName === 'admin' && currentUser?.role !== 'admin') {
+                alert('Admin access required!');
+                return;
+            }
+            
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
         }
+
+        // Event listeners
+        function setupEventListeners() {
+            document.getElementById('viewerRole').addEventListener('click', () => selectRole('viewer'));
+            document.getElementById('adminRole').addEventListener('click', () => selectRole('admin'));
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') login();
+            });
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        }
+
+        function selectRole(role) {
+            document.getElementById('viewerRole').classList.toggle('active', role === 'viewer');
+            document.getElementById('adminRole').classList.toggle('active', role === 'admin');
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadData(); // Load passwords from database first
+            checkAuthentication();
+        });
     </script>
 </body>
 </html>
