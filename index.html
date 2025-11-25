@@ -697,6 +697,16 @@
                             <!-- Teams will be populated by JavaScript -->
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="newMatchDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" id="newMatchTime" class="form-control">
+                    </div>
+
                 </div>
                 <button class="btn" onclick="addNewMatch()">
                     <i class="fas fa-plus"></i> Add Match
@@ -796,7 +806,7 @@
       messagingSenderId: "245161933582",
       appId: "1:245161933582:web:9d18c5bfc74a41f705b55f",
       measurementId: "G-3R2EZR2HK9"
-    }; // [attached_file:file:1]
+    };  
 
     let db = null;
     let isFirebaseConnected = false;
@@ -809,7 +819,7 @@
         document.getElementById('connectionStatus').style.display = 'inline-block';
     } catch (e) {
         console.log('Firebase init failed, using local storage instead');
-    } // [attached_file:file:1]
+    }  
 
     // ==================== TOURNAMENT DATA STRUCTURE ====================
     let tournamentData = {
@@ -823,7 +833,7 @@
     let currentUser = null;
     let isDragging = false;
     let draggedElement = null;
-    let passwordsLoaded = false; // [attached_file:file:1]
+    let passwordsLoaded = false;  
 
     // ==================== FIREBASE DATA MANAGEMENT ====================
     async function saveData() {
@@ -839,7 +849,7 @@
             localStorage.setItem('ludoTournamentData', JSON.stringify(tournamentData));
         }
         updateAllDisplays();
-    } // [attached_file:file:1]
+    }  
 
     function loadData() {
         if (db && isFirebaseConnected) {
@@ -862,7 +872,7 @@
         } else {
             loadFromLocalStorage();
         }
-    } // [attached_file:file:1]
+    }  
 
     function initializeFirstTimeData() {
         tournamentData.passwords = {
@@ -873,7 +883,7 @@
         saveData();
         hideLoadingMessage();
         console.log('🎯 First-time data initialized with default passwords');
-    } // [attached_file:file:1]
+    }  
 
     function loadFromLocalStorage() {
         const saved = localStorage.getItem('ludoTournamentData');
@@ -887,7 +897,7 @@
         }
         hideLoadingMessage();
         updateAllDisplays();
-    } // [attached_file:file:1]
+    }  
 
     function showLoadingMessage(message) {
         document.getElementById('loginHelp').style.display = 'block';
@@ -910,7 +920,7 @@
                 setTimeout(checkAuthentication, 100);
             }
         }
-    } // [attached_file:file:1]
+    }  
 
     function login() {
         if (!passwordsLoaded) {
@@ -935,7 +945,7 @@
         } else {
             alert('Invalid password! Please try again.');
         }
-    } // [attached_file:file:1]
+    }  
 
     function logout() {
         currentUser = null;
@@ -948,7 +958,7 @@
         document.getElementById('appContainer').style.display = 'none';
         document.getElementById('password').value = '';
         selectRole('viewer'); // reset role on logout
-    } // [attached_file:file:1]
+    }  
 
     function showApp() {
     document.getElementById('loginScreen').style.display = 'none';
@@ -1000,7 +1010,7 @@
 
         saveData();
         alert('Passwords updated successfully in database!');
-    } // [attached_file:file:1]
+    }  
 
     // ==================== TEAM MANAGEMENT ====================
     function addNewTeam() {
@@ -1038,7 +1048,7 @@
         player1Input.value = '';
         player2Input.value = '';
         saveData();
-    } // [attached_file:file:1]
+    }  
 
     function editTeam(teamId) {
         const team = tournamentData.teams.find(t => t.id === teamId);
@@ -1064,7 +1074,7 @@
         team.player2 = newPlayer2.trim();
 
         saveData();
-    } // [attached_file:file:1]
+    }  
 
     function deleteTeam(teamId) {
         if (!confirm('Are you sure you want to delete this team? This will also delete all matches involving this team.')) {
@@ -1075,40 +1085,60 @@
         tournamentData.matches = tournamentData.matches.filter(match =>
             match.team1 !== teamId && match.team2 !== teamId);
         saveData();
-    } // [attached_file:file:1]
+    }  
 
     // ==================== MATCH MANAGEMENT ====================
     function addNewMatch() {
         const team1 = parseInt(document.getElementById('newTeam1').value);
         const team2 = parseInt(document.getElementById('newTeam2').value);
-
+        const date = document.getElementById('newMatchDate').value; // format: "YYYY-MM-DD"
+        const time = document.getElementById('newMatchTime').value; // format: "HH:mm"
+    
         if (!team1 || !team2) {
             alert('Please select both teams');
             return;
         }
-
+    
         if (team1 === team2) {
             alert('Please select two different teams');
             return;
         }
-
-        if (tournamentData.matches.some(m =>
-            (m.team1 === team1 && m.team2 === team2) ||
-            (m.team1 === team2 && m.team2 === team1))) {
-            alert('This match already exists!');
+    
+        if (!date) {
+            alert('Please select a match date');
             return;
         }
-
+    
+        if (!time) {
+            alert('Please select a match time');
+            return;
+        }
+    
+        if (tournamentData.matches.some(m =>
+            (m.team1 === team1 && m.team2 === team2 && m.date === date && m.time === time))) {
+            alert('This match with same teams and schedule already exists!');
+            return;
+        }
+    
         tournamentData.matches.push({
             id: tournamentData.nextMatchId++,
             team1,
             team2,
             winner: null,
-            completed: false
+            completed: false,
+            date,  // store date string
+            time   // store time string
         });
-
+    
+        // Clear inputs after adding
+        document.getElementById('newTeam1').value = '';
+        document.getElementById('newTeam2').value = '';
+        document.getElementById('newMatchDate').value = '';
+        document.getElementById('newMatchTime').value = '';
+    
         saveData();
-    } // [attached_file:file:1]
+    }
+
 
     function deleteMatch(matchId) {
         if (!confirm('Are you sure you want to delete this match?')) {
@@ -1133,7 +1163,7 @@
         tournamentData.matches =
             tournamentData.matches.filter(match => match.id !== matchId);
         saveData();
-    } // [attached_file:file:1]
+    }  
 
     function updateMatchResult(matchId) {
         const winnerSelect = document.getElementById(`winner-${matchId}`);
@@ -1167,7 +1197,7 @@
         loser.losses += 1;
 
         saveData();
-    } // [attached_file:file:1]
+    }  
 
     // ==================== TOURNAMENT OPERATIONS ====================
     function resetTournament() {
@@ -1181,7 +1211,7 @@
             };
             saveData();
         }
-    } // [attached_file:file:1]
+    }  
 
     // ==================== DISPLAY FUNCTIONS ====================
     function updateAllDisplays() {
@@ -1190,7 +1220,7 @@
         updateTeamsList();
         updateLeaderDisplay();
         updateTeamSelects();
-    } // [attached_file:file:1]
+    }  
 
     function updatePointsTable() {
         const tbody = document.getElementById('points-table-body');
@@ -1224,12 +1254,19 @@
             `;
             tbody.appendChild(row);
         });
-    } // [attached_file:file:1]
+    }  
 
     function updateMatchesDisplay() {
         const container = document.getElementById('matches-container');
         const emptyState = document.getElementById('matches-empty');
         const reorderControls = document.getElementById('reorder-controls');
+
+        let dateTimeDisplay = '';
+        if (match.date && match.time) {
+            dateTimeDisplay = `<div style="margin-top: 8px; font-weight: 600; color: var(--secondary);">
+                Scheduled: ${match.date} ${match.time}
+            </div>`;
+        }
 
         container.innerHTML = '';
 
@@ -1289,6 +1326,7 @@
                         <span class="team-name">${team1.name}</span>
                         <span class="vs">VS</span>
                         <span class="team-name">${team2.name}</span>
+                        ${dateTimeDisplay}
                     </div>
                     <div class="team-players">
                         ${team1.player1}, ${team1.player2} vs ${team2.player1}, ${team2.player2}
@@ -1324,7 +1362,7 @@
 
             container.appendChild(matchCard);
         });
-    } // [attached_file:file:1]
+    }  
 
     function updateTeamsList() {
         const container = document.getElementById('teams-list');
@@ -1363,14 +1401,14 @@
             `;
             container.appendChild(teamEl);
         });
-    } // [attached_file:file:1]
+    }  
 
     function updateLeaderDisplay() {
         const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
         const leader = sortedTeams[0];
         document.getElementById('currentLeader').textContent =
             leader ? `${leader.name} (${leader.points} points)` : 'No teams yet';
-    } // [attached_file:file:1]
+    }  
 
     function updateTeamSelects() {
         const selects = ['newTeam1', 'newTeam2'];
@@ -1384,7 +1422,7 @@
                 select.appendChild(option);
             });
         });
-    } // [attached_file:file:1]
+    }  
 
     // ==================== DRAG & DROP ====================
     function handleDragStart(e) {
@@ -1427,7 +1465,7 @@
 
     function saveMatchOrder() {
         saveData();
-    } // [attached_file:file:1]
+    }  
 
     // ==================== EXPORT / IMPORT ====================
     function downloadPointsTable() {
@@ -1453,7 +1491,7 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Points Table");
         XLSX.writeFile(wb, 'ludo_tournament_points.xlsx');
-    } // [attached_file:file:1]
+    }  
 
     function exportTournamentData() {
         const dataStr = JSON.stringify(tournamentData, null, 2);
@@ -1466,7 +1504,7 @@
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-    } // [attached_file:file:1]
+    }  
 
     function importTournamentData() {
         document.getElementById('importFile').click();
@@ -1488,7 +1526,7 @@
             };
             reader.readAsText(file);
         }
-    }); // [attached_file:file:1]
+    });  
 
     // ==================== TABS & ROLE SELECTOR ====================
     function showTab(tabName) {
@@ -1515,19 +1553,19 @@
             if (e.key === 'Enter') login();
         });
         document.getElementById('logoutBtn').addEventListener('click', logout);
-    } // [attached_file:file:1]
+    }  
 
     function selectRole(role) {
         document.getElementById('viewerRole').classList.toggle('active', role === 'viewer');
         document.getElementById('adminRole').classList.toggle('active', role === 'admin');
-    } // [attached_file:file:1]
+    }  
 
     // ==================== INIT ====================
     document.addEventListener('DOMContentLoaded', function() {
         setupEventListeners();
         loadData();
         checkAuthentication();
-    }); // [attached_file:file:1]
+    });  
     </script>
 </body>
 </html>
