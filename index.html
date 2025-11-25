@@ -1470,22 +1470,35 @@
     });  
 
     // ==================== TABS & ROLE SELECTOR ====================
-    function showTab(event, tabName) {
-        if (tabName === 'admin' && currentUser?.role !== 'admin') {
-            alert('Admin access required!');
-            return;
+  function showTab(tabName) {
+            if (tabName === 'admin' && currentUser?.role !== 'admin') {
+                alert('Admin access required!');
+                return;
+            }
+        
+            // Remove active class from all tab content and buttons
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+        
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        
+            // Add active class to selected tab content
+            const tabContent = document.getElementById(tabName);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+        
+            // Add active class to the button corresponding to the tab
+            // Assumes button ID is tabName + 'Tab' (e.g., 'welcome' -> 'welcomeTab')
+            const tabButton = document.getElementById(tabName + 'Tab');
+            if (tabButton) {
+                tabButton.classList.add('active');
+            }
         }
-    
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-    
-        document.getElementById(tabName).classList.add('active');
-        event.currentTarget.classList.add('active');
-    }
+
 
 
 
