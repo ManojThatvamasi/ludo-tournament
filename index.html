@@ -1254,104 +1254,110 @@
     }  
 
    function updateMatchesDisplay() {
-    const container = document.getElementById('matches-container');
-    const emptyState = document.getElementById('matches-empty');
-    const reorderControls = document.getElementById('reorder-controls');
-
-    container.innerHTML = '';
-
-    if (tournamentData.matches.length === 0) {
-        emptyState.style.display = 'block';
-        reorderControls.style.display = 'none';
-        return;
-    }
-
-    emptyState.style.display = 'none';
-    reorderControls.style.display =
-        currentUser?.role === 'admin' ? 'block' : 'none';
-
-    tournamentData.matches.forEach(match => {
-        const team1 = tournamentData.teams.find(t => t.id === match.team1);
-        const team2 = tournamentData.teams.find(t => t.id === match.team2);
+        const container = document.getElementById('matches-container');
+        const emptyState = document.getElementById('matches-empty');
+        const reorderControls = document.getElementById('reorder-controls');
     
-        const team1Name = team1 ? team1.name : 'Deleted Team';
-        const team2Name = team2 ? team2.name : 'Deleted Team';
-        const team1Players = team1 ? `${team1.player1}, ${team1.player2}` : 'N/A';
-        const team2Players = team2 ? `${team2.player1}, ${team2.player2}` : 'N/A';
+        container.innerHTML = '';
     
-        let statusHtml = '<span class="match-status status-pending">⏳ Pending</span>';
-        if (!team1 || !team2) {
-            statusHtml = '<span class="match-status status-abandoned">❌ Abandoned</span>';
-        } else if (match.completed) {
-            statusHtml = '<span class="match-status status-completed">✅ Completed</span>';
+        if (tournamentData.matches.length === 0) {
+            emptyState.style.display = 'block';
+            reorderControls.style.display = 'none';
+            return;
         }
     
-        let winnerInfo = '';
-        if (match.completed) {
-            const winnerTeam = tournamentData.teams.find(t => t.id === match.winner);
-            if (winnerTeam) {
-                winnerInfo = `<div style="margin-top: 10px; color: var(--success); font-weight: bold;">
-                    Winner: ${winnerTeam.name}
+        emptyState.style.display = 'none';
+        reorderControls.style.display =
+            currentUser?.role === 'admin' ? 'block' : 'none';
+    
+        tournamentData.matches.forEach(match => {
+            const team1 = tournamentData.teams.find(t => t.id === match.team1);
+            const team2 = tournamentData.teams.find(t => t.id === match.team2);
+    
+            // Handle deleted teams gracefully
+            const team1Name = team1 ? team1.name : 'Deleted Team';
+            const team2Name = team2 ? team2.name : 'Deleted Team';
+            const team1Players = team1 ? `${team1.player1}, ${team1.player2}` : 'N/A';
+            const team2Players = team2 ? `${team2.player1}, ${team2.player2}` : 'N/A';
+    
+            let statusHtml = '<span class="match-status status-pending">⏳ Pending</span>';
+            if (!team1 || !team2) {
+                statusHtml = '<span class="match-status status-abandoned">❌ Abandoned</span>';
+            } else if (match.completed) {
+                statusHtml = '<span class="match-status status-completed">✅ Completed</span>';
+            }
+    
+            // Show winner info if match completed
+            let winnerInfo = '';
+            if (match.completed) {
+                const winnerTeam = tournamentData.teams.find(t => t.id === match.winner);
+                if (winnerTeam) {
+                    winnerInfo = `<div style="margin-top: 10px; color: var(--success); font-weight: bold;">
+                        Winner: ${winnerTeam.name}
+                    </div>`;
+                }
+            }
+    
+            // Show result timestamp if present
+            let resultTimeDisplay = '';
+            if (match.resultTimestamp) {
+                const dt = new Date(match.resultTimestamp);
+                resultTimeDisplay = `<div style="margin-top: 8px; font-weight: 600; color: var(--secondary);">
+                    Result recorded: ${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}
                 </div>`;
             }
-        }
     
-        let resultTimeDisplay = '';
-        if (match.resultTimestamp) {
-            const dt = new Date(match.resultTimestamp);
-            resultTimeDisplay = `<div style="margin-top: 8px; font-weight: 600; color: var(--secondary);">
-                Result recorded: ${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}
-            </div>`;
-        }
+            const matchCard = document.createElement('div');
+            matchCard.className = 'match-card';
+            matchCard.setAttribute('data-match-id', match.id);
+            matchCard.draggable = currentUser?.role === 'admin';
     
-        // Rest of your matchCard.innerHTML including winnerInfo inside the content
-        matchCard.innerHTML = `
-            <div class="drag-handle admin-only" style="display: ${currentUser?.role === 'admin' ? 'block' : 'none'}">
-                <i class="fas fa-grip-vertical"></i>
-            </div>
-            <div style="flex: 1;">
-                <div class="match-teams">
-                    <span class="team-name">${team1Name}</span>
-                    <span class="vs">VS</span>
-                    <span class="team-name">${team2Name}</span>
+            matchCard.innerHTML = `
+                <div class="drag-handle admin-only" style="display: ${currentUser?.role === 'admin' ? 'block' : 'none'}">
+                    <i class="fas fa-grip-vertical"></i>
                 </div>
-                <div class="team-players">
-                    ${team1Players} vs ${team2Players}
+                <div style="flex: 1;">
+                    <div class="match-teams">
+                        <span class="team-name">${team1Name}</span>
+                        <span class="vs">VS</span>
+                        <span class="team-name">${team2Name}</span>
+                    </div>
+                    <div class="team-players">
+                        ${team1Players} vs ${team2Players}
+                    </div>
+                    ${winnerInfo}
+                    ${resultTimeDisplay}
                 </div>
-                ${winnerInfo}
-                ${resultTimeDisplay}
-            </div>
-            <div class="match-actions">
-                ${statusHtml}
-                ${currentUser?.role === 'admin' && !match.completed && team1 && team2 ? `
-                    <select id="winner-${match.id}" class="form-control" style="margin-bottom: 5px;">
-                        <option value="">Select Winner</option>
-                        <option value="${team1.id}">${team1Name}</option>
-                        <option value="${team2.id}">${team2Name}</option>
-                    </select>
-                    <button class="btn btn-sm" onclick="updateMatchResult(${match.id})">
-                        <i class="fas fa-check"></i> Set Result
-                    </button>
-                ` : ''}
-                ${currentUser?.role === 'admin' ? `
-                    <button class="btn btn-danger btn-sm" onclick="deleteMatch(${match.id})">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
-                ` : ''}
-            </div>
-        `;
-    });
-
-        if (currentUser?.role === 'admin') {
-            matchCard.addEventListener('dragstart', handleDragStart);
-            matchCard.addEventListener('dragover', handleDragOver);
-            matchCard.addEventListener('drop', handleDrop);
-            matchCard.addEventListener('dragend', handleDragEnd);
-        }
-
-        container.appendChild(matchCard);
-    });
-}
+                <div class="match-actions">
+                    ${statusHtml}
+                    ${currentUser?.role === 'admin' && !match.completed && team1 && team2 ? `
+                        <select id="winner-${match.id}" class="form-control" style="margin-bottom: 5px;">
+                            <option value="">Select Winner</option>
+                            <option value="${team1.id}">${team1Name}</option>
+                            <option value="${team2.id}">${team2Name}</option>
+                        </select>
+                        <button class="btn btn-sm" onclick="updateMatchResult(${match.id})">
+                            <i class="fas fa-check"></i> Set Result
+                        </button>
+                    ` : ''}
+                    ${currentUser?.role === 'admin' ? `
+                        <button class="btn btn-danger btn-sm" onclick="deleteMatch(${match.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+    
+            if (currentUser?.role === 'admin') {
+                matchCard.addEventListener('dragstart', handleDragStart);
+                matchCard.addEventListener('dragover', handleDragOver);
+                matchCard.addEventListener('drop', handleDrop);
+                matchCard.addEventListener('dragend', handleDragEnd);
+            }
+    
+            container.appendChild(matchCard);
+        });
+    }
 
 
 
