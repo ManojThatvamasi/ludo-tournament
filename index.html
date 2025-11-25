@@ -1273,21 +1273,29 @@
     tournamentData.matches.forEach(match => {
         const team1 = tournamentData.teams.find(t => t.id === match.team1);
         const team2 = tournamentData.teams.find(t => t.id === match.team2);
-
-        // Handle deleted teams gracefully
+    
         const team1Name = team1 ? team1.name : 'Deleted Team';
         const team2Name = team2 ? team2.name : 'Deleted Team';
         const team1Players = team1 ? `${team1.player1}, ${team1.player2}` : 'N/A';
         const team2Players = team2 ? `${team2.player1}, ${team2.player2}` : 'N/A';
-
+    
         let statusHtml = '<span class="match-status status-pending">⏳ Pending</span>';
         if (!team1 || !team2) {
             statusHtml = '<span class="match-status status-abandoned">❌ Abandoned</span>';
         } else if (match.completed) {
             statusHtml = '<span class="match-status status-completed">✅ Completed</span>';
         }
-
-        // Show result timestamp if present
+    
+        let winnerInfo = '';
+        if (match.completed) {
+            const winnerTeam = tournamentData.teams.find(t => t.id === match.winner);
+            if (winnerTeam) {
+                winnerInfo = `<div style="margin-top: 10px; color: var(--success); font-weight: bold;">
+                    Winner: ${winnerTeam.name}
+                </div>`;
+            }
+        }
+    
         let resultTimeDisplay = '';
         if (match.resultTimestamp) {
             const dt = new Date(match.resultTimestamp);
@@ -1295,12 +1303,8 @@
                 Result recorded: ${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}
             </div>`;
         }
-
-        const matchCard = document.createElement('div');
-        matchCard.className = 'match-card';
-        matchCard.setAttribute('data-match-id', match.id);
-        matchCard.draggable = currentUser?.role === 'admin';
-
+    
+        // Rest of your matchCard.innerHTML including winnerInfo inside the content
         matchCard.innerHTML = `
             <div class="drag-handle admin-only" style="display: ${currentUser?.role === 'admin' ? 'block' : 'none'}">
                 <i class="fas fa-grip-vertical"></i>
@@ -1314,6 +1318,7 @@
                 <div class="team-players">
                     ${team1Players} vs ${team2Players}
                 </div>
+                ${winnerInfo}
                 ${resultTimeDisplay}
             </div>
             <div class="match-actions">
@@ -1335,6 +1340,7 @@
                 ` : ''}
             </div>
         `;
+    });
 
         if (currentUser?.role === 'admin') {
             matchCard.addEventListener('dragstart', handleDragStart);
