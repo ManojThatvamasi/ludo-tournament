@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MC Boys LUDO Tournament</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -396,198 +397,121 @@
         .match-actions {
             display: flex;
             gap: 5px;
+            flex-direction: column;
         }
         
         /* Responsive */
-        /* Mobile Responsive Fixes */
-@media (max-width: 768px) {
-    /* Points Table Mobile Fix */
-    .points-table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-        font-size: 0.8rem;
-    }
-    
-    .points-table thead {
-        display: table-header-group;
-    }
-    
-    .points-table th,
-    .points-table td {
-        padding: 10px 8px;
-        min-width: 80px;
-    }
-    
-    .points-table th:nth-child(1),
-    .points-table td:nth-child(1) {
-        min-width: 40px; /* Position column */
-    }
-    
-    .points-table th:nth-child(2),
-    .points-table td:nth-child(2) {
-        min-width: 120px; /* Team name column */
-    }
-    
-    .points-table th:nth-child(3),
-    .points-table td:nth-child(3) {
-        min-width: 150px; /* Players column */
-        white-space: normal;
-    }
-    
-    /* Tab Content Padding */
-    .tab-content {
-        padding: 20px 15px;
-    }
-    
-    /* Header Fix */
-    .header h1 {
-        font-size: 1.8rem;
-    }
-    
-    /* Match Cards Mobile Fix */
-    .match-card {
-        padding: 15px;
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .match-teams {
-        flex-direction: column;
-        gap: 8px;
-        text-align: center;
-    }
-    
-    .team-players {
-        font-size: 0.8rem;
-    }
-    
-    /* Team Cards Mobile Fix */
-    .team-card {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
-    }
-    
-    /* Form Controls Mobile Fix */
-    .form-control {
-        font-size: 16px; /* Prevents zoom on iOS */
-    }
-    
-    /* Action Buttons Mobile Fix */
-    .action-buttons {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    .action-buttons .btn {
-        width: 100%;
-        margin-bottom: 10px;
-    }
-}
+        @media (max-width: 768px) {
+            /* Points Table Mobile Fix */
+            .points-table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .points-table {
+                min-width: 700px;
+                font-size: 0.85rem;
+            }
+            
+            .points-table th,
+            .points-table td {
+                padding: 12px 8px;
+            }
+            
+            .points-table th:nth-child(3),
+            .points-table td:nth-child(3) {
+                max-width: 150px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            
+            /* Tab Content Padding */
+            .tab-content {
+                padding: 20px 15px;
+            }
+            
+            /* Header Fix */
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            /* Match Cards Mobile Fix */
+            .match-card {
+                padding: 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .match-teams {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+            
+            .team-players {
+                font-size: 0.8rem;
+            }
+            
+            /* Team Cards Mobile Fix */
+            .team-card {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            /* Form Controls Mobile Fix */
+            .form-control {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+            
+            /* Action Buttons Mobile Fix */
+            .action-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
 
-/* Extra Small Mobile Fixes */
-@media (max-width: 480px) {
-    .points-table {
-        font-size: 0.75rem;
-    }
-    
-    .points-table th,
-    .points-table td {
-        padding: 8px 5px;
-        min-width: 70px;
-    }
-    
-    .header h1 {
-        font-size: 1.5rem;
-    }
-    
-    .login-box {
-        padding: 25px 20px;
-        margin: 10px;
-    }
-    
-    .tab-btn {
-        padding: 10px 15px;
-        font-size: 0.8rem;
-    }
-}
-
-/* Enhanced Points Table */
-.points-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.points-table th {
-    background: var(--dark);
-    color: white;
-    padding: 15px;
-    text-align: left;
-    font-weight: 600;
-}
-
-.points-table td {
-    padding: 15px;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.points-table tr:nth-child(even) {
-    background: #f7fafc;
-}
-
-.points-table tr:hover {
-    background: #edf2f7;
-}
-
-.team-points {
-    font-weight: bold;
-    color: var(--dark);
-}
-
-/* Mobile Responsive Points Table */
-@media (max-width: 768px) {
-    .points-table-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .points-table {
-        min-width: 600px; /* Minimum width for table */
-        font-size: 0.85rem;
-    }
-    
-    .points-table th,
-    .points-table td {
-        padding: 12px 8px;
-    }
-    
-    .points-table th:nth-child(3),
-    .points-table td:nth-child(3) {
-        max-width: 150px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-}
-
-@media (max-width: 480px) {
-    .points-table {
-        min-width: 500px;
-        font-size: 0.8rem;
-    }
-    
-    .points-table th,
-    .points-table td {
-        padding: 10px 6px;
-    }
-}
-
-
+        @media (max-width: 480px) {
+            .points-table {
+                min-width: 600px;
+                font-size: 0.8rem;
+            }
+            
+            .points-table th,
+            .points-table td {
+                padding: 10px 6px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .login-box {
+                padding: 25px 20px;
+                margin: 10px;
+            }
+            
+            .tab-btn {
+                padding: 10px 15px;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -673,23 +597,23 @@
         <div id="points" class="tab-content active">
             <h2>📊 Tournament Points Table</h2>
             <div class="points-table-container">
-                    <table class="points-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Team</th>
-                                <!-- <th>Players</th> -->
-                                <th>Matches</th>
-                                <th>Wins</th>
-                                <th>Losses</th>
-                                <th>Points</th>
-                            </tr>
-                        </thead>
-                        <tbody id="points-table-body">
-                            <!-- Points table will be populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
+                <table class="points-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Team</th>
+                            <th>Players</th>
+                            <th>Matches</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody id="points-table-body">
+                        <!-- Points table will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
             
             <div class="action-buttons">
                 <button class="btn btn-success admin-only" onclick="downloadPointsTable()">
@@ -962,7 +886,7 @@
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${team.name}</td>
-                   
+                    <td>${team.player1}, ${team.player2}</td>
                     <td>${team.matches}</td>
                     <td>${team.wins}</td>
                     <td>${team.losses}</td>
@@ -1032,19 +956,17 @@
                     <div class="match-actions">
                         ${status}
                         ${currentUser.role === 'admin' && !match.completed ? `
-                            <div style="margin-top: 10px;">
-                                <select id="winner-${match.id}" class="form-control" style="margin-bottom: 5px;">
-                                    <option value="">Select Winner</option>
-                                    <option value="${team1.id}">${team1.name}</option>
-                                    <option value="${team2.id}">${team2.name}</option>
-                                </select>
-                                <button class="btn btn-sm" onclick="updateMatchResult(${match.id})">
-                                    <i class="fas fa-check"></i> Set Result
-                                </button>
-                            </div>
+                            <select id="winner-${match.id}" class="form-control" style="margin-bottom: 5px;">
+                                <option value="">Select Winner</option>
+                                <option value="${team1.id}">${team1.name}</option>
+                                <option value="${team2.id}">${team2.name}</option>
+                            </select>
+                            <button class="btn btn-sm" onclick="updateMatchResult(${match.id})">
+                                <i class="fas fa-check"></i> Set Result
+                            </button>
                         ` : ''}
                         ${currentUser.role === 'admin' ? `
-                            <button class="btn btn-danger btn-sm" onclick="deleteMatch(${match.id})" style="margin-top: 5px;">
+                            <button class="btn btn-danger btn-sm" onclick="deleteMatch(${match.id})">
                                 <i class="fas fa-trash"></i> Delete
                             </button>
                         ` : ''}
@@ -1236,13 +1158,8 @@
             // Remove team from teams array
             tournamentData.teams = tournamentData.teams.filter(team => team.id !== teamId);
             
-            // Update matches to mark as abandoned if they involve this team
-            tournamentData.matches.forEach(match => {
-                if (match.team1 === teamId || match.team2 === teamId) {
-                    match.completed = true;
-                    match.winner = null; // Mark as abandoned
-                }
-            });
+            // Remove matches involving this team
+            tournamentData.matches = tournamentData.matches.filter(match => match.team1 !== teamId && match.team2 !== teamId);
             
             saveData();
         }
@@ -1252,6 +1169,14 @@
             const team2 = parseInt(document.getElementById('newTeam2').value);
             
             if (team1 && team2 && team1 !== team2) {
+                // Check if match already exists
+                if (tournamentData.matches.some(m => 
+                    (m.team1 === team1 && m.team2 === team2) || 
+                    (m.team1 === team2 && m.team2 === team1))) {
+                    alert('This match already exists!');
+                    return;
+                }
+                
                 tournamentData.matches.push({
                     id: tournamentData.nextMatchId++,
                     team1,
@@ -1269,6 +1194,22 @@
         function deleteMatch(matchId) {
             if (!confirm('Are you sure you want to delete this match?')) {
                 return;
+            }
+            
+            const match = tournamentData.matches.find(m => m.id === matchId);
+            if (match && match.completed) {
+                // Reverse the stats if completed
+                const winner = tournamentData.teams.find(t => t.id === match.winner);
+                const loserId = match.team1 === match.winner ? match.team2 : match.team1;
+                const loser = tournamentData.teams.find(t => t.id === loserId);
+                
+                if (winner && loser) {
+                    winner.matches -= 1;
+                    winner.wins -= 1;
+                    winner.points -= 2;
+                    loser.matches -= 1;
+                    loser.losses -= 1;
+                }
             }
             
             tournamentData.matches = tournamentData.matches.filter(match => match.id !== matchId);
@@ -1326,21 +1267,19 @@
         }
 
         function resetTournament() {
-            if (confirm('Are you sure you want to reset all tournament data? This cannot be undone!')) {
-                tournamentData.teams.forEach(team => {
-                    team.matches = 0;
-                    team.wins = 0;
-                    team.losses = 0;
-                    team.points = 0;
-                });
-                
-                tournamentData.matches.forEach(match => {
-                    match.winner = null;
-                    match.completed = false;
-                });
-                
+            if (confirm('Are you sure you want to reset all tournament data? This will delete all teams, matches, and reset everything!')) {
+                tournamentData = {
+                    teams: [],
+                    matches: [],
+                    passwords: {
+                        admin: "admin123",
+                        viewer: "view123"
+                    },
+                    nextTeamId: 1,
+                    nextMatchId: 1
+                };
                 saveData();
-                alert('Tournament has been reset!');
+                alert('Tournament has been fully reset!');
             }
         }
 
@@ -1348,13 +1287,22 @@
         function downloadPointsTable() {
             const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
             
-            let csvContent = "Position,Team,Player 1,Player 2,Matches,Wins,Losses,Points\n";
+            const data = sortedTeams.map((team, index) => ({
+                Position: index + 1,
+                Team: team.name,
+                'Player 1': team.player1,
+                'Player 2': team.player2,
+                Matches: team.matches,
+                Wins: team.wins,
+                Losses: team.losses,
+                Points: team.points
+            }));
             
-            sortedTeams.forEach((team, index) => {
-                csvContent += `${index + 1},${team.name},${team.player1},${team.player2},${team.matches},${team.wins},${team.losses},${team.points}\n`;
-            });
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Points Table");
             
-            downloadFile(csvContent, 'ludo_tournament_points.csv', 'text/csv');
+            XLSX.writeFile(wb, 'ludo_tournament_points.xlsx');
         }
 
         function exportTournamentData() {
