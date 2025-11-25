@@ -1082,55 +1082,60 @@
 
     // ==================== MATCH MANAGEMENT ====================
     function addNewMatch() {
-        const team1 = parseInt(document.getElementById('newTeam1').value);
-        const team2 = parseInt(document.getElementById('newTeam2').value);
-        const date = document.getElementById('newMatchDate').value; // format: "YYYY-MM-DD"
-        const time = document.getElementById('newMatchTime').value; // format: "HH:mm"
-    
-        if (!team1 || !team2) {
-            alert('Please select both teams');
-            return;
-        }
-    
-        if (team1 === team2) {
-            alert('Please select two different teams');
-            return;
-        }
-    
-        if (!date) {
-            alert('Please select a match date');
-            return;
-        }
-    
-        if (!time) {
-            alert('Please select a match time');
-            return;
-        }
-    
-        if (tournamentData.matches.some(m =>
-            (m.team1 === team1 && m.team2 === team2 && m.date === date && m.time === time))) {
-            alert('This match with same teams and schedule already exists!');
-            return;
-        }
-    
-        tournamentData.matches.push({
-            id: tournamentData.nextMatchId++,
-            team1,
-            team2,
-            winner: null,
-            completed: false,
-            date,  // store date string
-            time   // store time string
-        });
-    
-        // Clear inputs after adding
-        document.getElementById('newTeam1').value = '';
-        document.getElementById('newTeam2').value = '';
-        document.getElementById('newMatchDate').value = '';
-        document.getElementById('newMatchTime').value = '';
-    
-        saveData();
+    const team1Select = document.getElementById('newTeam1');
+    const team2Select = document.getElementById('newTeam2');
+    const dateInput = document.getElementById('newMatchDate');
+    const timeInput = document.getElementById('newMatchTime');
+
+    if (!team1Select || !team2Select) {
+        alert('Please open the Admin Panel tab first before adding matches.');
+        return;
     }
+    const team1 = parseInt(team1Select.value);
+    const team2 = parseInt(team2Select.value);
+
+    if (!team1 || !team2) {
+        alert('Please select both teams');
+        return;
+    }
+
+    if (team1 === team2) {
+        alert('Please select two different teams');
+        return;
+    }
+
+    const date = dateInput ? dateInput.value : '';
+    const time = timeInput ? timeInput.value : '';
+
+    // If scheduling is required, validate date and time - optional
+    // if (!date) { alert('Please select a match date'); return; }
+    // if (!time) { alert('Please select a match time'); return; }
+
+    // Check for duplicate match with same teams and date/time if used
+    if (tournamentData.matches.some(m =>
+        m.team1 === team1 && m.team2 === team2 && m.date === date && m.time === time)) {
+        alert('This match with same teams and schedule already exists!');
+        return;
+    }
+
+    tournamentData.matches.push({
+        id: tournamentData.nextMatchId++,
+        team1,
+        team2,
+        winner: null,
+        completed: false,
+        date,  // optional if not used, pass blank string
+        time   // optional if not used, pass blank string
+    });
+
+    // Clear inputs after adding
+    team1Select.value = '';
+    team2Select.value = '';
+    if (dateInput) dateInput.value = '';
+    if (timeInput) timeInput.value = '';
+
+    saveData();
+}
 
 
     function deleteMatch(matchId) {
