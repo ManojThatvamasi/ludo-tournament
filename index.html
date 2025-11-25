@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC Boys LUDO Tournament</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a6fd8;
+            --secondary: #764ba2;
+            --success: #48bb78;
+            --danger: #e53e3e;
+            --warning: #ed8936;
+            --dark: #2d3748;
+            --light: #f7fafc;
+            --gray: #718096;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+        
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .login-title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .login-subtitle {
+            color: var(--gray);
+            margin-bottom: 30px;
+        }
+        
+        .role-selector {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .role-btn {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .role-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-success:hover {
+            background: #38a169;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background: #c53030;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+        }
+        
+        .btn-warning:hover {
+            background: #dd771c;
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        
+        /* Main App */
+        .app-container {
+            display: none;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 500px;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .points-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .points-table th {
+            background: var(--dark);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .points-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .points-table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+        
+        .points-table tr:hover {
+            background: #edf2f7;
+        }
+        
+        .team-points {
+            font-weight: bold;
+            color: var(--dark);
+        }
+        
+        .admin-controls {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .match-card {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .match-teams {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .team-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .vs {
+            color: var(--gray);
+            font-weight: bold;
+        }
+        
+        .match-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background: #fed7d7;
+            color: var(--danger);
+        }
+        
+        .status-completed {
+            background: #c6f6d5;
+            color: var(--success);
+        }
+        
+        .status-abandoned {
+            background: #e2e8f0;
+            color: var(--gray);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .team-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .team-players {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+        
+        .drag-handle {
+            cursor: move;
+            color: var(--gray);
+            padding: 5px;
+        }
+        
+        .match-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tab-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .points-table {
+                font-size: 0.9rem;
+            }
+            
+            .points-table th, 
+            .points-table td {
+                padding: 10px 8px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .match-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .team-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .action-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .match-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="container login-container" id="loginScreen">
+        <div class="login-box">
+            <h1 class="login-title">🎲 MC Boys LUDO</h1>
+            <p class="login-subtitle">Tournament Management System</p>
+            
+            <div class="role-selector">
+                <button class="role-btn active" id="viewerRole">Viewer</button>
+                <button class="role-btn" id="adminRole">Admin</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password">
+            </div>
+            
+            <button class="btn" id="loginBtn" style="width: 100%;">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+        </div>
+    </div>
+    
+    <!-- Main Application -->
+    <div class="container app-container" id="appContainer">
+        <div class="header">
+            <div>
+                <h1>🏆 MC Boys LUDO Tournament</h1>
+                <p>Season 2024 - Competitive LUDO Championship</p>
+            </div>
+            <div class="user-info">
+                <span id="userRoleDisplay"></span>
+                <button class="btn btn-warning" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn" id="welcomeTab" onclick="showTab('welcome')">
+                <i class="fas fa-home"></i> Welcome
+            </button>
+            <button class="tab-btn active" id="pointsTab" onclick="showTab('points')">
+                <i class="fas fa-table"></i> Points Table
+            </button>
+            <button class="tab-btn" id="scheduleTab" onclick="showTab('schedule')">
+                <i class="fas fa-calendar-alt"></i> Matches
+            </button>
+            <button class="tab-btn admin-only" id="adminTab" onclick="showTab('admin')">
+                <i class="fas fa-cogs"></i> Admin Panel
+            </button>
+        </div>
+        
+        <!-- Welcome Tab -->
+        <div id="welcome" class="tab-content">
+            <h2>🎲 Welcome to MC Boys LUDO Tournament!</h2>
+            <p style="margin: 20px 0; font-size: 1.1rem; line-height: 1.6;">
+                Get ready for an exciting LUDO tournament featuring competitive teams. 
+                Follow the matches, track points, and see who emerges as the ultimate champion!
+            </p>
+            
+            <div class="card">
+                <h3 class="card-title"><i class="fas fa-info-circle"></i> Tournament Rules</h3>
+                <ul style="margin: 15px 0; padding-left: 20px;">
+                    <li>Win: 2 points</li>
+                    <li>Lose: 0 points</li>
+                    <li>No draws - every match has a winner</li>
+                    <li>Multiple teams competing for the championship</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title"><i class="fas fa-trophy"></i> Current Leader</h3>
+                <div id="currentLeader" style="font-size: 1.2rem; font-weight: bold; color: var(--primary); margin: 10px 0;">
+                    Loading...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Points Table Tab -->
+        <div id="points" class="tab-content active">
+            <h2>📊 Tournament Points Table</h2>
+            <table class="points-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Team</th>
+                        <th>Players</th>
+                        <th>Matches</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody id="points-table-body">
+                    <!-- Points table will be populated by JavaScript -->
+                </tbody>
+            </table>
+            
+            <div class="action-buttons">
+                <button class="btn btn-success admin-only" onclick="downloadPointsTable()">
+                    <i class="fas fa-download"></i> Download Excel
+                </button>
+            </div>
+        </div>
+        
+        <!-- Schedule Tab -->
+        <div id="schedule" class="tab-content">
+            <h2>📅 Tournament Matches</h2>
+            
+            <div class="admin-controls admin-only">
+                <h3><i class="fas fa-plus-circle"></i> Add New Match</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Team 1</label>
+                        <select id="newTeam1" class="form-control">
+                            <!-- Teams will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Team 2</label>
+                        <select id="newTeam2" class="form-control">
+                            <!-- Teams will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="addNewMatch()">
+                    <i class="fas fa-plus"></i> Add Match
+                </button>
+            </div>
+            
+            <div class="admin-controls admin-only">
+                <h3><i class="fas fa-sort"></i> Reorder Matches</h3>
+                <p>Drag and drop matches to rearrange the schedule</p>
+                <button class="btn btn-warning" onclick="saveMatchOrder()">
+                    <i class="fas fa-save"></i> Save New Order
+                </button>
+            </div>
+            
+            <div id="matches-container">
+                <!-- Matches will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Admin Panel -->
+        <div id="admin" class="tab-content">
+            <h2>⚙️ Admin Panel</h2>
+            
+            <div class="card">
+                <h3 class="card-title"><i class="fas fa-users"></i> Manage Teams</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <input type="text" id="newTeamName" class="form-control" placeholder="Enter team name">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <input type="text" id="player1Name" class="form-control" placeholder="Player 1 name">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="player2Name" class="form-control" placeholder="Player 2 name">
+                    </div>
+                </div>
+                <button class="btn" onclick="addNewTeam()">
+                    <i class="fas fa-plus"></i> Add Team
+                </button>
+                
+                <div id="teams-list" style="margin-top: 15px;">
+                    <!-- Teams list will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title"><i class="fas fa-key"></i> Password Management</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Admin Password</label>
+                        <input type="password" id="adminPassword" class="form-control" placeholder="New admin password">
+                    </div>
+                    <div class="form-group">
+                        <label>Viewer Password</label>
+                        <input type="password" id="viewerPassword" class="form-control" placeholder="New viewer password">
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="updatePasswords()">
+                    <i class="fas fa-save"></i> Update Passwords
+                </button>
+            </div>
+            
+            <div class="card">
+                <h3 class="card-title"><i class="fas fa-database"></i> Tournament Data</h3>
+                <button class="btn btn-danger" onclick="resetTournament()">
+                    <i class="fas fa-trash"></i> Reset Tournament
+                </button>
+                <button class="btn" onclick="exportTournamentData()" style="margin-left: 10px;">
+                    <i class="fas fa-file-export"></i> Export Data
+                </button>
+                <button class="btn" onclick="importTournamentData()" style="margin-left: 10px;">
+                    <i class="fas fa-file-import"></i> Import Data
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tournament data structure
+        let tournamentData = {
+            teams: [
+                { id: 1, name: "Team Thunder", player1: "Player A", player2: "Player B", matches: 0, wins: 0, losses: 0, points: 0 },
+                { id: 2, name: "LUDO Legends", player1: "Player C", player2: "Player D", matches: 0, wins: 0, losses: 0, points: 0 },
+                { id: 3, name: "Dice Masters", player1: "Player E", player2: "Player F", matches: 0, wins: 0, losses: 0, points: 0 }
+            ],
+            matches: [
+                { id: 1, team1: 1, team2: 2, winner: null, completed: false },
+                { id: 2, team1: 2, team2: 3, winner: null, completed: false },
+                { id: 3, team1: 3, team2: 1, winner: null, completed: false }
+            ],
+            passwords: {
+                admin: "admin123",
+                viewer: "view123"
+            },
+            nextTeamId: 4,
+            nextMatchId: 4
+        };
+
+        let currentUser = null;
+        let isDragging = false;
+        let draggedElement = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            setupEventListeners();
+            checkAuthentication();
+        });
+
+        // Event listeners setup
+        function setupEventListeners() {
+            // Role selection
+            document.getElementById('viewerRole').addEventListener('click', () => selectRole('viewer'));
+            document.getElementById('adminRole').addEventListener('click', () => selectRole('admin'));
+            
+            // Login
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') login();
+            });
+            
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        }
+
+        // Role selection
+        function selectRole(role) {
+            document.getElementById('viewerRole').classList.toggle('active', role === 'viewer');
+            document.getElementById('adminRole').classList.toggle('active', role === 'admin');
+        }
+
+        // Authentication functions
+        function checkAuthentication() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showApp();
+            }
+        }
+
+        function login() {
+            const role = document.getElementById('viewerRole').classList.contains('active') ? 'viewer' : 'admin';
+            const password = document.getElementById('password').value;
+            
+            if (password === tournamentData.passwords[role]) {
+                currentUser = { role, loginTime: new Date().toISOString() };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Redirect based on role
+                if (role === 'viewer') {
+                    document.getElementById('pointsTab').click();
+                } else {
+                    document.getElementById('pointsTab').click();
+                }
+                
+                showApp();
+            } else {
+                alert('Invalid password! Please try again.');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            showLogin();
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('password').value = '';
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('userRoleDisplay').textContent = `Logged in as ${currentUser.role}`;
+            
+            // Show/hide admin elements based on role
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = currentUser.role === 'admin' ? 'block' : 'none';
+            });
+            
+            // Hide admin tab for viewers
+            document.getElementById('adminTab').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
+            
+            updateAllDisplays();
+        }
+
+        // Data management
+        function loadData() {
+            const saved = localStorage.getItem('ludoTournamentData');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                tournamentData = { ...tournamentData, ...parsed };
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('ludoTournamentData', JSON.stringify(tournamentData));
+            updateAllDisplays();
+        }
+
+        // Tab navigation
+        function showTab(tabName) {
+            if (tabName === 'admin' && currentUser.role !== 'admin') {
+                alert('Admin access required!');
+                return;
+            }
+            
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Update all displays
+        function updateAllDisplays() {
+            updatePointsTable();
+            updateMatchesDisplay();
+            updateTeamsList();
+            updateLeaderDisplay();
+            updateTeamSelects();
+        }
+
+        function updatePointsTable() {
+            const tbody = document.getElementById('points-table-body');
+            tbody.innerHTML = '';
+
+            const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
+            
+            sortedTeams.forEach((team, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${team.name}</td>
+                    <td>${team.player1}, ${team.player2}</td>
+                    <td>${team.matches}</td>
+                    <td>${team.wins}</td>
+                    <td>${team.losses}</td>
+                    <td class="team-points">${team.points}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateMatchesDisplay() {
+            const container = document.getElementById('matches-container');
+            container.innerHTML = '';
+
+            tournamentData.matches.forEach(match => {
+                const team1 = tournamentData.teams.find(t => t.id === match.team1);
+                const team2 = tournamentData.teams.find(t => t.id === match.team2);
+                
+                // Check if teams exist (in case of deletion)
+                if (!team1 || !team2) {
+                    const matchCard = document.createElement('div');
+                    matchCard.className = 'match-card';
+                    matchCard.innerHTML = `
+                        <div>
+                            <div class="match-teams">
+                                <span class="team-name">Team Deleted</span>
+                                <span class="vs">VS</span>
+                                <span class="team-name">Team Deleted</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="match-status status-abandoned">❌ Abandoned</span>
+                        </div>
+                    `;
+                    container.appendChild(matchCard);
+                    return;
+                }
+                
+                const matchCard = document.createElement('div');
+                matchCard.className = 'match-card';
+                matchCard.setAttribute('data-match-id', match.id);
+                matchCard.draggable = currentUser.role === 'admin';
+                
+                let status = '<span class="match-status status-pending">⏳ Pending</span>';
+                let winnerInfo = '';
+                
+                if (match.completed) {
+                    const winner = tournamentData.teams.find(t => t.id === match.winner);
+                    status = `<span class="match-status status-completed">✅ Completed</span>`;
+                    winnerInfo = `<div style="margin-top: 10px; color: var(--success);"><strong>Winner: ${winner.name}</strong></div>`;
+                }
+                
+                matchCard.innerHTML = `
+                    <div class="drag-handle admin-only" style="display: ${currentUser.role === 'admin' ? 'block' : 'none'}">
+                        <i class="fas fa-grip-vertical"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="match-teams">
+                            <span class="team-name">${team1.name}</span>
+                            <span class="vs">VS</span>
+                            <span class="team-name">${team2.name}</span>
+                        </div>
+                        <div class="team-players">
+                            ${team1.player1}, ${team1.player2} vs ${team2.player1}, ${team2.player2}
+                        </div>
+                        ${winnerInfo}
+                    </div>
+                    <div class="match-actions">
+                        ${status}
+                        ${currentUser.role === 'admin' && !match.completed ? `
+                            <div style="margin-top: 10px;">
+                                <select id="winner-${match.id}" class="form-control" style="margin-bottom: 5px;">
+                                    <option value="">Select Winner</option>
+                                    <option value="${team1.id}">${team1.name}</option>
+                                    <option value="${team2.id}">${team2.name}</option>
+                                </select>
+                                <button class="btn btn-sm" onclick="updateMatchResult(${match.id})">
+                                    <i class="fas fa-check"></i> Set Result
+                                </button>
+                            </div>
+                        ` : ''}
+                        ${currentUser.role === 'admin' ? `
+                            <button class="btn btn-danger btn-sm" onclick="deleteMatch(${match.id})" style="margin-top: 5px;">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Add drag events for admin
+                if (currentUser.role === 'admin') {
+                    matchCard.addEventListener('dragstart', handleDragStart);
+                    matchCard.addEventListener('dragover', handleDragOver);
+                    matchCard.addEventListener('drop', handleDrop);
+                    matchCard.addEventListener('dragend', handleDragEnd);
+                }
+                
+                container.appendChild(matchCard);
+            });
+        }
+
+        function updateTeamsList() {
+            const container = document.getElementById('teams-list');
+            container.innerHTML = '';
+            
+            tournamentData.teams.forEach(team => {
+                const teamEl = document.createElement('div');
+                teamEl.className = 'team-card';
+                teamEl.innerHTML = `
+                    <div>
+                        <div style="font-weight: bold;">${team.name}</div>
+                        <div class="team-players">${team.player1}, ${team.player2}</div>
+                        <div style="margin-top: 5px; font-size: 0.9rem;">
+                            <span style="margin-right: 10px;">Matches: ${team.matches}</span>
+                            <span style="margin-right: 10px;">Wins: ${team.wins}</span>
+                            <span>Points: ${team.points}</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-warning btn-sm" onclick="editTeam(${team.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteTeam(${team.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                `;
+                container.appendChild(teamEl);
+            });
+        }
+
+        function updateLeaderDisplay() {
+            const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
+            const leader = sortedTeams[0];
+            document.getElementById('currentLeader').textContent = 
+                leader ? `${leader.name} (${leader.points} points)` : 'No matches played yet';
+        }
+
+        function updateTeamSelects() {
+            const selects = ['newTeam1', 'newTeam2'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '';
+                tournamentData.teams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // Drag and drop functions for match reordering
+        function handleDragStart(e) {
+            isDragging = true;
+            draggedElement = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            this.style.opacity = '0.4';
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                draggedElement.innerHTML = this.innerHTML;
+                this.innerHTML = e.dataTransfer.getData('text/html');
+                
+                // Update the data model
+                const fromIndex = Array.from(this.parentNode.children).indexOf(draggedElement);
+                const toIndex = Array.from(this.parentNode.children).indexOf(this);
+                
+                // Swap matches in the array
+                const temp = tournamentData.matches[fromIndex];
+                tournamentData.matches[fromIndex] = tournamentData.matches[toIndex];
+                tournamentData.matches[toIndex] = temp;
+            }
+            
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.style.opacity = '1';
+            isDragging = false;
+            draggedElement = null;
+        }
+
+        function saveMatchOrder() {
+            saveData();
+            alert('Match order saved successfully!');
+        }
+
+        // Admin functions
+        function addNewTeam() {
+            const nameInput = document.getElementById('newTeamName');
+            const player1Input = document.getElementById('player1Name');
+            const player2Input = document.getElementById('player2Name');
+            
+            const name = nameInput.value.trim();
+            const player1 = player1Input.value.trim();
+            const player2 = player2Input.value.trim();
+            
+            if (!name || !player1 || !player2) {
+                alert('Please enter team name and both player names');
+                return;
+            }
+            
+            // Check for duplicate team name
+            if (tournamentData.teams.some(team => team.name.toLowerCase() === name.toLowerCase())) {
+                alert('Team name already exists! Please choose a different name.');
+                return;
+            }
+            
+            tournamentData.teams.push({
+                id: tournamentData.nextTeamId++,
+                name,
+                player1,
+                player2,
+                matches: 0,
+                wins: 0,
+                losses: 0,
+                points: 0
+            });
+            
+            nameInput.value = '';
+            player1Input.value = '';
+            player2Input.value = '';
+            saveData();
+        }
+
+        function editTeam(teamId) {
+            const team = tournamentData.teams.find(t => t.id === teamId);
+            if (!team) return;
+            
+            const newName = prompt('Enter new team name:', team.name);
+            if (newName === null) return;
+            
+            const newPlayer1 = prompt('Enter Player 1 name:', team.player1);
+            if (newPlayer1 === null) return;
+            
+            const newPlayer2 = prompt('Enter Player 2 name:', team.player2);
+            if (newPlayer2 === null) return;
+            
+            // Check for duplicate team name (excluding current team)
+            if (tournamentData.teams.some(t => t.id !== teamId && t.name.toLowerCase() === newName.toLowerCase())) {
+                alert('Team name already exists! Please choose a different name.');
+                return;
+            }
+            
+            team.name = newName.trim();
+            team.player1 = newPlayer1.trim();
+            team.player2 = newPlayer2.trim();
+            
+            saveData();
+        }
+
+        function deleteTeam(teamId) {
+            if (!confirm('Are you sure you want to delete this team? This will affect all matches involving this team.')) {
+                return;
+            }
+            
+            // Remove team from teams array
+            tournamentData.teams = tournamentData.teams.filter(team => team.id !== teamId);
+            
+            // Update matches to mark as abandoned if they involve this team
+            tournamentData.matches.forEach(match => {
+                if (match.team1 === teamId || match.team2 === teamId) {
+                    match.completed = true;
+                    match.winner = null; // Mark as abandoned
+                }
+            });
+            
+            saveData();
+        }
+
+        function addNewMatch() {
+            const team1 = parseInt(document.getElementById('newTeam1').value);
+            const team2 = parseInt(document.getElementById('newTeam2').value);
+            
+            if (team1 && team2 && team1 !== team2) {
+                tournamentData.matches.push({
+                    id: tournamentData.nextMatchId++,
+                    team1,
+                    team2,
+                    winner: null,
+                    completed: false
+                });
+                
+                saveData();
+            } else {
+                alert('Please select two different teams');
+            }
+        }
+
+        function deleteMatch(matchId) {
+            if (!confirm('Are you sure you want to delete this match?')) {
+                return;
+            }
+            
+            tournamentData.matches = tournamentData.matches.filter(match => match.id !== matchId);
+            saveData();
+        }
+
+        function updateMatchResult(matchId) {
+            const winnerSelect = document.getElementById(`winner-${matchId}`);
+            const winnerId = parseInt(winnerSelect.value);
+            
+            if (!winnerId) {
+                alert('Please select a winner');
+                return;
+            }
+            
+            const match = tournamentData.matches.find(m => m.id === matchId);
+            if (!match) return;
+            
+            // Prevent updating if already completed
+            if (match.completed) {
+                alert('This match result has already been set and cannot be changed.');
+                return;
+            }
+            
+            // Update match
+            match.winner = winnerId;
+            match.completed = true;
+            
+            // Update teams
+            const winner = tournamentData.teams.find(t => t.id === winnerId);
+            const loser = tournamentData.teams.find(t => t.id === (match.team1 === winnerId ? match.team2 : match.team1));
+            
+            winner.matches += 1;
+            winner.wins += 1;
+            winner.points += 2;
+            
+            loser.matches += 1;
+            loser.losses += 1;
+            
+            saveData();
+        }
+
+        function updatePasswords() {
+            const adminPass = document.getElementById('adminPassword').value;
+            const viewerPass = document.getElementById('viewerPassword').value;
+            
+            if (adminPass) tournamentData.passwords.admin = adminPass;
+            if (viewerPass) tournamentData.passwords.viewer = viewerPass;
+            
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('viewerPassword').value = '';
+            
+            saveData();
+            alert('Passwords updated successfully!');
+        }
+
+        function resetTournament() {
+            if (confirm('Are you sure you want to reset all tournament data? This cannot be undone!')) {
+                tournamentData.teams.forEach(team => {
+                    team.matches = 0;
+                    team.wins = 0;
+                    team.losses = 0;
+                    team.points = 0;
+                });
+                
+                tournamentData.matches.forEach(match => {
+                    match.winner = null;
+                    match.completed = false;
+                });
+                
+                saveData();
+                alert('Tournament has been reset!');
+            }
+        }
+
+        // Export/Import functions
+        function downloadPointsTable() {
+            const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
+            
+            let csvContent = "Position,Team,Player 1,Player 2,Matches,Wins,Losses,Points\n";
+            
+            sortedTeams.forEach((team, index) => {
+                csvContent += `${index + 1},${team.name},${team.player1},${team.player2},${team.matches},${team.wins},${team.losses},${team.points}\n`;
+            });
+            
+            downloadFile(csvContent, 'ludo_tournament_points.csv', 'text/csv');
+        }
+
+        function exportTournamentData() {
+            const dataStr = JSON.stringify(tournamentData, null, 2);
+            downloadFile(dataStr, 'ludo_tournament_data.json', 'application/json');
+        }
+
+        function importTournamentData() {
+            document.getElementById('importFile').click();
+        }
+
+        document.getElementById('importFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        tournamentData = importedData;
+                        saveData();
+                        alert('Tournament data imported successfully!');
+                    } catch (error) {
+                        alert('Error importing data: Invalid file format');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function downloadFile(content, fileName, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
