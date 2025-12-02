@@ -548,36 +548,120 @@
         }
 
         /* Position colors */
-.position-1 {
-    background: linear-gradient(90deg, #fff9db 0%, #fff3cd 100%) !important;
-    border-left: 4px solid gold !important;
-}
+        .position-1 {
+            background: linear-gradient(90deg, #fff9db 0%, #fff3cd 100%) !important;
+            border-left: 4px solid gold !important;
+        }
+        
+        .position-2 {
+            background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            border-left: 4px solid silver !important;
+        }
+        
+        .position-3 {
+            background: linear-gradient(90deg, #fff3e6 0%, #ffe8cc 100%) !important;
+            border-left: 4px solid #cd7f32 !important;
+        }
+        
+        /* Points table row styling */
+        .points-table tr.position-1 td:first-child {
+            font-weight: bold;
+            color: #856404;
+        }
+        
+        .points-table tr.position-2 td:first-child {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        
+        .points-table tr.position-3 td:first-child {
+            font-weight: bold;
+            color: #cd7f32;
+        }
 
-.position-2 {
-    background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%) !important;
-    border-left: 4px solid silver !important;
-}
-
-.position-3 {
-    background: linear-gradient(90deg, #fff3e6 0%, #ffe8cc 100%) !important;
-    border-left: 4px solid #cd7f32 !important;
-}
-
-/* Points table row styling */
-.points-table tr.position-1 td:first-child {
-    font-weight: bold;
-    color: #856404;
-}
-
-.points-table tr.position-2 td:first-child {
-    font-weight: bold;
-    color: #6c757d;
-}
-
-.points-table tr.position-3 td:first-child {
-    font-weight: bold;
-    color: #cd7f32;
-}
+        /* Add to CSS section */
+        .playoff-match-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .playoff-match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .playoff-match-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .playoff-teams {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .playoff-team {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f7fafc;
+            min-width: 150px;
+        }
+        
+        .playoff-vs {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--gray);
+            margin: 0 20px;
+        }
+        
+        .qualified-team-badge {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .playoff-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .playoff-status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .playoff-pending {
+            background: #fed7d7;
+            color: var(--danger);
+        }
+        
+        .playoff-completed {
+            background: #c6f6d5;
+            color: var(--success);
+        }
         
     </style>
 </head>
@@ -701,6 +785,27 @@
                     <i class="fas fa-download"></i> Download Excel
                 </button>
             </div>
+
+            <div class="card admin-only" style="margin-top: 20px;">
+                <h3 class="card-title"><i class="fas fa-filter"></i> Team Consideration</h3>
+                <p style="margin-bottom: 10px; color: var(--gray);">
+                    Consider only top N teams in points table display
+                </p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Number of Teams to Consider</label>
+                        <input type="number" id="considerTeamsCount" class="form-control" 
+                               min="1" placeholder="Show all teams">
+                    </div>
+                </div>
+                <button class="btn" onclick="applyTeamConsideration()">
+                    <i class="fas fa-filter"></i> Apply Filter
+                </button>
+                <button class="btn btn-warning" onclick="resetTeamConsideration()" style="margin-left: 10px;">
+                    <i class="fas fa-redo"></i> Show All Teams
+                </button>
+            </div>
+            
         </div>
 
         <!-- Schedule Tab -->
@@ -819,6 +924,99 @@
                 </button>
                 <input type="file" id="importFile" accept=".json" style="display: none;">
             </div>
+
+            <div class="card">
+                <h3 class="card-title"><i class="fas fa-trophy"></i> Playoff / Qualifier Management</h3>
+                
+                <!-- League Completion Section -->
+                <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h4 style="margin-bottom: 10px; color: var(--dark);">
+                        <i class="fas fa-flag-checkered"></i> League Stage Completion
+                    </h4>
+                    <p style="margin-bottom: 15px; color: var(--gray);">
+                        Complete the league stage to start playoffs/qualifiers
+                    </p>
+                    <button class="btn ${tournamentData.seasonCompleted ? 'btn-warning' : 'btn-success'}" 
+                            onclick="completeLeagueStage()" id="completeLeagueBtn">
+                        <i class="fas ${tournamentData.seasonCompleted ? 'fa-redo' : 'fa-check'}"></i> 
+                        ${tournamentData.seasonCompleted ? 'Re-open League Stage' : 'Complete League Stage'}
+                    </button>
+                    <div style="margin-top: 10px; font-size: 0.9rem;">
+                        Status: <span id="leagueStatus" style="font-weight: bold;">
+                            ${tournamentData.seasonCompleted ? 'Completed ✅' : 'Ongoing ⏳'}
+                        </span>
+                    </div>
+                </div>
+            
+                <!-- Playoff Setup Section -->
+                <div id="playoffSetupSection" style="${tournamentData.seasonCompleted ? '' : 'display: none;'} 
+                        margin-bottom: 20px; padding: 15px; background: #e8f4fd; border-radius: 8px;">
+                    <h4 style="margin-bottom: 10px; color: var(--dark);">
+                        <i class="fas fa-play"></i> Setup Playoffs
+                    </h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Number of Teams for Playoffs</label>
+                            <input type="number" id="playoffTeamsCount" class="form-control" 
+                                   min="2" max="8" value="${tournamentData.playoffTeamsCount || 4}">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="setupPlayoffs()">
+                        <i class="fas fa-cogs"></i> Setup Playoff Bracket
+                    </button>
+                    
+                    <!-- Current Qualified Teams Display -->
+                    <div id="qualifiedTeamsDisplay" style="margin-top: 15px; display: none;">
+                        <h5 style="color: var(--dark); margin-bottom: 10px;">Qualified Teams:</h5>
+                        <div id="qualifiedTeamsList" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <!-- Qualified teams will appear here -->
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Playoff Matches Management -->
+                <div id="playoffMatchesSection" style="${tournamentData.playoffStage === 'ongoing' ? '' : 'display: none;'} 
+                        padding: 15px; background: #f0f9ff; border-radius: 8px;">
+                    <h4 style="margin-bottom: 10px; color: var(--dark);">
+                        <i class="fas fa-gamepad"></i> Playoff Matches
+                    </h4>
+                    
+                    <!-- Add Playoff Match Form -->
+                    <div style="margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px;">
+                        <h5 style="margin-bottom: 10px;">Add Playoff Match</h5>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Match Name</label>
+                                <input type="text" id="playoffMatchName" class="form-control" 
+                                       placeholder="e.g., Eliminator, Semi-Final 1, Final">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Team 1</label>
+                                <select id="playoffTeam1" class="form-control">
+                                    <option value="">Select Team 1</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Team 2</label>
+                                <select id="playoffTeam2" class="form-control">
+                                    <option value="">Select Team 2</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn" onclick="addPlayoffMatch()">
+                            <i class="fas fa-plus"></i> Add Playoff Match
+                        </button>
+                    </div>
+            
+                    <!-- Playoff Matches List -->
+                    <div id="playoffMatchesList">
+                        <!-- Playoff matches will appear here -->
+                    </div>
+                </div>
+            </div>
+            
         </div>
     </div>
 
@@ -851,9 +1049,14 @@
     let tournamentData = {
         teams: [],
         matches: [],
+        playoffMatches: [], 
         passwords: { admin: "", viewer: "" },
         nextTeamId: 1,
-        nextMatchId: 1
+        nextMatchId: 1,
+        nextPlayoffMatchId: 1,
+        seasonCompleted: false, 
+        playoffTeamsCount: 0, 
+        playoffStage: 'not_started'
     };
 
     let currentUser = null;
@@ -863,6 +1066,14 @@
 
     // ==================== FIREBASE DATA MANAGEMENT ====================
     async function saveData() {
+         tournamentData = {
+                ...tournamentData,
+                playoffMatches: tournamentData.playoffMatches || [],
+                nextPlayoffMatchId: tournamentData.nextPlayoffMatchId || 1,
+                seasonCompleted: tournamentData.seasonCompleted || false,
+                playoffTeamsCount: tournamentData.playoffTeamsCount || 0,
+                playoffStage: tournamentData.playoffStage || 'not_started'
+            };
         if (db && isFirebaseConnected) {
             try {
                 await db.collection('tournament').doc('data').set(tournamentData);
@@ -877,6 +1088,46 @@
         updateAllDisplays();
     }  
 
+        function updateAdminUIState() {
+    // Update league completion button
+    const completeBtn = document.getElementById('completeLeagueBtn');
+    if (completeBtn) {
+        completeBtn.className = `btn ${tournamentData.seasonCompleted ? 'btn-warning' : 'btn-success'}`;
+        completeBtn.innerHTML = `
+            <i class="fas ${tournamentData.seasonCompleted ? 'fa-redo' : 'fa-check'}"></i> 
+            ${tournamentData.seasonCompleted ? 'Re-open League Stage' : 'Complete League Stage'}
+        `;
+    }
+    
+    // Update league status
+    const leagueStatus = document.getElementById('leagueStatus');
+    if (leagueStatus) {
+        leagueStatus.innerHTML = tournamentData.seasonCompleted ? 'Completed ✅' : 'Ongoing ⏳';
+    }
+    
+    // Show/hide playoff sections
+    const playoffSetup = document.getElementById('playoffSetupSection');
+    if (playoffSetup) {
+        playoffSetup.style.display = tournamentData.seasonCompleted ? 'block' : 'none';
+    }
+    
+    const playoffMatches = document.getElementById('playoffMatchesSection');
+    if (playoffMatches) {
+        playoffMatches.style.display = tournamentData.playoffStage === 'ongoing' ? 'block' : 'none';
+    }
+    
+    // Update playoff teams count input
+    const playoffCountInput = document.getElementById('playoffTeamsCount');
+    if (playoffCountInput) {
+        playoffCountInput.value = tournamentData.playoffTeamsCount || 4;
+    }
+    
+    // Update displays
+    updateQualifiedTeamsDisplay();
+    updatePlayoffTeamSelects();
+    updatePlayoffMatchesDisplay();
+}
+        
     function loadData() {
         if (db && isFirebaseConnected) {
             showLoadingMessage('Loading from database...');
@@ -1006,6 +1257,336 @@
     }
 
     updateAllDisplays();
+}
+
+        function completeLeagueStage() {
+    tournamentData.seasonCompleted = !tournamentData.seasonCompleted;
+    
+    if (tournamentData.seasonCompleted) {
+        // Show playoff setup section
+        document.getElementById('playoffSetupSection').style.display = 'block';
+        updateQualifiedTeamsDisplay();
+        alert('League stage completed! You can now setup playoffs.');
+    } else {
+        // Hide playoff sections
+        document.getElementById('playoffSetupSection').style.display = 'none';
+        document.getElementById('playoffMatchesSection').style.display = 'none';
+        tournamentData.playoffStage = 'not_started';
+        alert('League stage re-opened for modifications.');
+    }
+    
+    saveData();
+}
+
+// ==================== PLAYOFF SETUP ====================
+function setupPlayoffs() {
+    const countInput = document.getElementById('playoffTeamsCount');
+    const count = parseInt(countInput.value);
+    
+    if (isNaN(count) || count < 2 || count > tournamentData.teams.length) {
+        alert(`Please enter a valid number between 2 and ${tournamentData.teams.length}`);
+        return;
+    }
+    
+    tournamentData.playoffTeamsCount = count;
+    tournamentData.playoffStage = 'ongoing';
+    
+    // Clear existing playoff matches
+    tournamentData.playoffMatches = [];
+    tournamentData.nextPlayoffMatchId = 1;
+    
+    // Show playoff matches section
+    document.getElementById('playoffMatchesSection').style.display = 'block';
+    
+    // Update qualified teams display
+    updateQualifiedTeamsDisplay();
+    
+    // Update team selects for playoff matches
+    updatePlayoffTeamSelects();
+    
+    // Update playoff matches list
+    updatePlayoffMatchesDisplay();
+    
+    saveData();
+    
+    alert(`Playoffs setup complete! Top ${count} teams will compete in playoffs.`);
+}
+
+// ==================== QUALIFIED TEAMS DISPLAY ====================
+function updateQualifiedTeamsDisplay() {
+    if (!tournamentData.seasonCompleted) return;
+    
+    const qualifiedTeamsDiv = document.getElementById('qualifiedTeamsDisplay');
+    const teamsListDiv = document.getElementById('qualifiedTeamsList');
+    
+    // Sort teams by points (with tiebreaker: fewer matches first)
+    const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return a.matches - b.matches;
+    });
+    
+    // Get qualified teams
+    const qualifiedTeams = sortedTeams.slice(0, tournamentData.playoffTeamsCount || 4);
+    
+    if (qualifiedTeams.length === 0) {
+        qualifiedTeamsDiv.style.display = 'none';
+        return;
+    }
+    
+    qualifiedTeamsDiv.style.display = 'block';
+    teamsListDiv.innerHTML = '';
+    
+    qualifiedTeams.forEach((team, index) => {
+        const teamBadge = document.createElement('div');
+        teamBadge.className = 'qualified-team-badge';
+        teamBadge.innerHTML = `
+            <span>${index + 1}. ${team.name}</span>
+            <small>(${team.points} pts)</small>
+        `;
+        teamsListDiv.appendChild(teamBadge);
+    });
+}
+
+// ==================== PLAYOFF MATCH MANAGEMENT ====================
+function updatePlayoffTeamSelects() {
+    const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return a.matches - b.matches;
+    });
+    
+    const qualifiedTeams = sortedTeams.slice(0, tournamentData.playoffTeamsCount || 4);
+    
+    const team1Select = document.getElementById('playoffTeam1');
+    const team2Select = document.getElementById('playoffTeam2');
+    
+    team1Select.innerHTML = '<option value="">Select Team 1</option>';
+    team2Select.innerHTML = '<option value="">Select Team 2</option>';
+    
+    qualifiedTeams.forEach(team => {
+        const option1 = document.createElement('option');
+        option1.value = team.id;
+        option1.textContent = `${team.name} (${team.points} pts)`;
+        
+        const option2 = option1.cloneNode(true);
+        
+        team1Select.appendChild(option1);
+        team2Select.appendChild(option2);
+    });
+}
+
+function addPlayoffMatch() {
+    const matchName = document.getElementById('playoffMatchName').value.trim();
+    const team1Id = parseInt(document.getElementById('playoffTeam1').value);
+    const team2Id = parseInt(document.getElementById('playoffTeam2').value);
+    
+    if (!matchName) {
+        alert('Please enter a match name (e.g., Eliminator, Semi-Final, Final)');
+        return;
+    }
+    
+    if (!team1Id || !team2Id) {
+        alert('Please select both teams');
+        return;
+    }
+    
+    if (team1Id === team2Id) {
+        alert('Please select two different teams');
+        return;
+    }
+    
+    // Check if this playoff match already exists
+    const duplicateMatch = tournamentData.playoffMatches.find(match => 
+        match.name === matchName || 
+        (match.team1 === team1Id && match.team2 === team2Id) ||
+        (match.team1 === team2Id && match.team2 === team1Id)
+    );
+    
+    if (duplicateMatch) {
+        alert('This playoff match already exists!');
+        return;
+    }
+    
+    // Add playoff match
+    tournamentData.playoffMatches.push({
+        id: tournamentData.nextPlayoffMatchId++,
+        name: matchName,
+        team1: team1Id,
+        team2: team2Id,
+        winner: null,
+        completed: false,
+        resultTimestamp: null
+    });
+    
+    // Clear inputs
+    document.getElementById('playoffMatchName').value = '';
+    document.getElementById('playoffTeam1').value = '';
+    document.getElementById('playoffTeam2').value = '';
+    
+    updatePlayoffMatchesDisplay();
+    saveData();
+}
+
+function updatePlayoffMatchesDisplay() {
+    const container = document.getElementById('playoffMatchesList');
+    container.innerHTML = '';
+    
+    if (tournamentData.playoffMatches.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="text-align: center; padding: 30px; color: var(--gray);">
+                <i class="fas fa-trophy" style="font-size: 3rem; opacity: 0.5;"></i>
+                <h3>No Playoff Matches Yet</h3>
+                <p>Add playoff matches using the form above</p>
+            </div>
+        `;
+        return;
+    }
+    
+    tournamentData.playoffMatches.forEach(match => {
+        const team1 = tournamentData.teams.find(t => t.id === match.team1);
+        const team2 = tournamentData.teams.find(t => t.id === match.team2);
+        
+        if (!team1 || !team2) return;
+        
+        const matchCard = document.createElement('div');
+        matchCard.className = 'playoff-match-card';
+        
+        let statusHtml = '<span class="playoff-status-badge playoff-pending">⏳ Pending</span>';
+        let winnerSelect = '';
+        let resultActions = '';
+        
+        if (match.completed) {
+            const winnerTeam = tournamentData.teams.find(t => t.id === match.winner);
+            statusHtml = `
+                <span class="playoff-status-badge playoff-completed">✅ Completed</span>
+                <div style="margin-top: 5px; color: var(--success); font-weight: bold;">
+                    Winner: ${winnerTeam ? winnerTeam.name : 'Unknown'}
+                </div>
+            `;
+        } else {
+            winnerSelect = `
+                <select id="playoffWinner-${match.id}" class="form-control" style="margin-bottom: 10px;">
+                    <option value="">Select Winner</option>
+                    <option value="${team1.id}">${team1.name}</option>
+                    <option value="${team2.id}">${team2.name}</option>
+                </select>
+                <button class="btn btn-sm btn-success" onclick="updatePlayoffMatchResult(${match.id})">
+                    <i class="fas fa-check"></i> Set Result
+                </button>
+            `;
+        }
+        
+        matchCard.innerHTML = `
+            <div class="playoff-match-header">
+                <div>
+                    <div class="playoff-match-name">${match.name}</div>
+                    <div style="font-size: 0.9rem; color: var(--gray);">
+                        Playoff Match #${match.id}
+                    </div>
+                </div>
+                <div>${statusHtml}</div>
+            </div>
+            
+            <div class="playoff-teams">
+                <div class="playoff-team">
+                    <div style="font-weight: bold; font-size: 1.1rem;">${team1.name}</div>
+                    <div style="font-size: 0.9rem; color: var(--gray); margin-top: 5px;">
+                        ${team1.player1}, ${team1.player2}
+                    </div>
+                    <div style="margin-top: 10px; color: var(--primary);">
+                        ${team1.points} pts • ${team1.wins}W ${team1.losses}L
+                    </div>
+                </div>
+                
+                <div class="playoff-vs">VS</div>
+                
+                <div class="playoff-team">
+                    <div style="font-weight: bold; font-size: 1.1rem;">${team2.name}</div>
+                    <div style="font-size: 0.9rem; color: var(--gray); margin-top: 5px;">
+                        ${team2.player1}, ${team2.player2}
+                    </div>
+                    <div style="margin-top: 10px; color: var(--primary);">
+                        ${team2.points} pts • ${team2.wins}W ${team2.losses}L
+                    </div>
+                </div>
+            </div>
+            
+            <div class="playoff-actions">
+                ${winnerSelect}
+                <button class="btn btn-sm btn-danger" onclick="deletePlayoffMatch(${match.id})" 
+                        style="margin-left: 10px;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        `;
+        
+        container.appendChild(matchCard);
+    });
+}
+
+function updatePlayoffMatchResult(matchId) {
+    const winnerSelect = document.getElementById(`playoffWinner-${matchId}`);
+    const winnerId = parseInt(winnerSelect.value);
+    
+    if (!winnerId) {
+        alert('Please select a winner');
+        return;
+    }
+    
+    const match = tournamentData.playoffMatches.find(m => m.id === matchId);
+    if (!match || match.completed) return;
+    
+    match.winner = winnerId;
+    match.completed = true;
+    match.resultTimestamp = new Date().toISOString();
+    
+    // Update team stats (optional - playoff wins don't affect league points)
+    const winner = tournamentData.teams.find(t => t.id === winnerId);
+    const loser = tournamentData.teams.find(t => 
+        t.id === (match.team1 === winnerId ? match.team2 : match.team1));
+    
+    // You can track playoff stats separately if needed
+    // For now, just mark the playoff match as completed
+    
+    updatePlayoffMatchesDisplay();
+    saveData();
+    
+    alert(`${winner.name} wins the ${match.name}!`);
+}
+
+function deletePlayoffMatch(matchId) {
+    if (!confirm('Are you sure you want to delete this playoff match?')) return;
+    
+    tournamentData.playoffMatches = tournamentData.playoffMatches.filter(
+        match => match.id !== matchId
+    );
+    
+    updatePlayoffMatchesDisplay();
+    saveData();
+}
+
+        let considerTeamsCount = 0; // 0 means show all teams
+
+function applyTeamConsideration() {
+    const countInput = document.getElementById('considerTeamsCount');
+    const count = parseInt(countInput.value);
+    
+    if (isNaN(count) || count < 1) {
+        considerTeamsCount = 0; // Show all
+        alert('Showing all teams');
+    } else {
+        considerTeamsCount = count;
+        alert(`Now showing top ${count} teams only`);
+    }
+    
+    updatePointsTable();
+    updateLeaderDisplay();
+}
+
+function resetTeamConsideration() {
+    considerTeamsCount = 0;
+    document.getElementById('considerTeamsCount').value = '';
+    updatePointsTable();
+    updateLeaderDisplay();
 }
 
 
@@ -1275,7 +1856,25 @@
 
     // Sort teams by points (descending)
     const sortedTeams = [...tournamentData.teams].sort((a, b) => {
-        return b.points - a.points; // Only sort by points
+        // 1. First sort by points (higher points first)
+        if (b.points !== a.points) {
+            return b.points - a.points;
+        }
+        // 2. If points are equal, sort by matches played (fewer matches first)
+        return a.matches - b.matches;
+    });
+
+        const displayTeams = considerTeamsCount > 0 
+        ? sortedTeams.slice(0, considerTeamsCount)
+        : sortedTeams;
+    
+    // Group teams by points
+    const teamsByPoints = {};
+    displayTeams.forEach(team => {
+        if (!teamsByPoints[team.points]) {
+            teamsByPoints[team.points] = [];
+        }
+        teamsByPoints[team.points].push(team);
     });
 
     // Group teams by points to determine ranks
@@ -1489,6 +2088,10 @@
         // 2. If points are equal, sort by matches played (fewer matches first)
         return a.matches - b.matches;
     });
+
+       const displayTeams = considerTeamsCount > 0 
+        ? sortedTeams.slice(0, considerTeamsCount)
+        : sortedTeams;
     
     // Get highest points
     const highestPoints = sortedTeams[0].points;
@@ -1653,7 +2256,14 @@
             return;
         }
 
-        const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
+        const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+        // 1. First sort by points (higher points first)
+        if (b.points !== a.points) {
+            return b.points - a.points;
+        }
+        // 2. If points are equal, sort by matches played (fewer matches first)
+        return a.matches - b.matches;
+    });
 
         const data = sortedTeams.map((team, index) => ({
             Position: index + 1,
@@ -1709,6 +2319,15 @@
 
     // ==================== TABS & ROLE SELECTOR ====================
   function showTab(tabName) {
+
+       if (tabName === 'admin') {
+        if (currentUser?.role !== 'admin') {
+            alert('Admin access required!');
+            return;
+        }
+        updateAdminUIState(); 
+    }
+      
             if (tabName === 'admin' && currentUser?.role !== 'admin') {
                 alert('Admin access required!');
                 return;
