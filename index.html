@@ -546,6 +546,39 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* Position colors */
+.position-1 {
+    background: linear-gradient(90deg, #fff9db 0%, #fff3cd 100%) !important;
+    border-left: 4px solid gold !important;
+}
+
+.position-2 {
+    background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    border-left: 4px solid silver !important;
+}
+
+.position-3 {
+    background: linear-gradient(90deg, #fff3e6 0%, #ffe8cc 100%) !important;
+    border-left: 4px solid #cd7f32 !important;
+}
+
+/* Points table row styling */
+.points-table tr.position-1 td:first-child {
+    font-weight: bold;
+    color: #856404;
+}
+
+.points-table tr.position-2 td:first-child {
+    font-weight: bold;
+    color: #6c757d;
+}
+
+.points-table tr.position-3 td:first-child {
+    font-weight: bold;
+    color: #cd7f32;
+}
+        
     </style>
 </head>
 <body>
@@ -1112,11 +1145,11 @@
     // if (!time) { alert('Please select a match time'); return; }
 
     // Check for duplicate match with same teams and date/time if used
-    if (tournamentData.matches.some(m =>
-        m.team1 === team1 && m.team2 === team2 && m.date === date && m.time === time)) {
-        alert('This match with same teams and schedule already exists!');
-        return;
-    }
+    // if (tournamentData.matches.some(m =>
+    //     m.team1 === team1 && m.team2 === team2 && m.date === date && m.time === time)) {
+    //     alert('This match with same teams and schedule already exists!');
+    //     return;
+    // }
 
     tournamentData.matches.push({
         id: tournamentData.nextMatchId++,
@@ -1225,38 +1258,74 @@
     }  
 
     function updatePointsTable() {
-        const tbody = document.getElementById('points-table-body');
-        const pointsTable = document.getElementById('points-table');
-        const emptyState = document.getElementById('points-empty');
+    const tbody = document.getElementById('points-table-body');
+    const pointsTable = document.getElementById('points-table');
+    const emptyState = document.getElementById('points-empty');
 
-        tbody.innerHTML = '';
+    tbody.innerHTML = '';
 
-        if (tournamentData.teams.length === 0) {
-            pointsTable.style.display = 'none';
-            emptyState.style.display = 'block';
-            return;
+    if (tournamentData.teams.length === 0) {
+        pointsTable.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    pointsTable.style.display = 'table';
+    emptyState.style.display = 'none';
+
+    // Sort teams by points (descending)
+    const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+        return b.points - a.points; // Only sort by points
+    });
+
+    // Group teams by points to determine ranks
+    const teamsByPoints = {};
+    sortedTeams.forEach(team => {
+        if (!teamsByPoints[team.points]) {
+            teamsByPoints[team.points] = [];
         }
+        teamsByPoints[team.points].push(team);
+    });
 
-        pointsTable.style.display = 'table';
-        emptyState.style.display = 'none';
-
-        const sortedTeams = [...tournamentData.teams]
-            .sort((a, b) => b.points - a.points);
-
-        sortedTeams.forEach((team, index) => {
+    // Display teams with proper ranking
+    let rank = 1;
+    Object.keys(teamsByPoints).sort((a, b) => b - a).forEach(points => {
+        const teams = teamsByPoints[points];
+        
+        teams.forEach((team, index) => {
             const row = document.createElement('tr');
+            
+            // Determine medal emoji based on rank
+            let medal = '';
+            if (rank === 1) medal = ' 🥇';
+            else if (rank === 2) medal = ' 🥈';
+            else if (rank === 3) medal = ' 🥉';
+            
+            // Set row color based on rank
+            let rowClass = '';
+            if (rank === 1) rowClass = 'position-1';
+            else if (rank === 2) rowClass = 'position-2';
+            else if (rank === 3) rowClass = 'position-3';
+            
+            row.className = rowClass;
+            
             row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${team.name}</td>
+                <td>${rank}${medal}</td>
+                <td><strong>${team.name}</strong></td>
                 <td>${team.player1}, ${team.player2}</td>
                 <td>${team.matches}</td>
                 <td>${team.wins}</td>
                 <td>${team.losses}</td>
-                <td class="team-points">${team.points}</td>
+                <td class="team-points"><strong>${team.points}</strong></td>
             `;
+            
             tbody.appendChild(row);
         });
-    }  
+        
+        // Move to next rank (skip numbers equal to number of teams at current points)
+        rank += teams.length;
+    });
+}
 
    function updateMatchesDisplay() {
         const container = document.getElementById('matches-container');
@@ -1405,12 +1474,120 @@
         });
     }  
 
-    function updateLeaderDisplay() {
-        const sortedTeams = [...tournamentData.teams].sort((a, b) => b.points - a.points);
-        const leader = sortedTeams[0];
-        document.getElementById('currentLeader').textContent =
-            leader ? `${leader.name} (${leader.points} points)` : 'No teams yet';
-    }  
+   function updateLeaderDisplay() {
+    if (tournamentData.teams.length === 0) {
+        document.getElementById('currentLeader').innerHTML = 'No teams yet. Add teams to start the tournament!';
+        return;
+    }
+    
+    // Sort teams by points
+    const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+        // 1. First sort by points (higher points first)
+        if (b.points !== a.points) {
+            return b.points - a.points;
+        }
+        // 2. If points are equal, sort by matches played (fewer matches first)
+        return a.matches - b.matches;
+    });
+    
+    // Get highest points
+    const highestPoints = sortedTeams[0].points;
+    
+    // Find all teams with highest points
+    const topTeams = sortedTeams.filter(team => team.points === highestPoints);
+    
+    let leaderHTML = '';
+    
+    if (topTeams.length === 1) {
+        // Single leader
+        const leader = topTeams[0];
+        leaderHTML = `
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeb99 100%); border-radius: 10px; margin-bottom: 15px;">
+                <span style="font-size: 2rem;">🥇</span>
+                <h3 style="margin: 10px 0; color: #856404;">TOURNAMENT LEADER</h3>
+                <strong style="font-size: 1.5rem; color: #856404;">${leader.name}</strong>
+                <div style="margin-top: 10px;">
+                    <span style="background: #856404; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                        ${leader.points} POINTS
+                    </span>
+                </div>
+                <div style="margin-top: 10px; color: #856404;">
+                    ${leader.matches} matches • ${leader.wins} wins • ${leader.losses} losses
+                </div>
+            </div>
+        `;
+    } else {
+        // Multiple teams tied for first
+        leaderHTML = `
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeb99 100%); border-radius: 10px; margin-bottom: 15px;">
+                <span style="font-size: 2rem;">🥇</span>
+                <h3 style="margin: 10px 0; color: #856404;">JOINT LEADERS (${topTeams.length} TEAMS)</h3>
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px;">
+        `;
+        
+        topTeams.forEach(team => {
+            leaderHTML += `
+                <div style="background: white; padding: 10px 15px; border-radius: 8px; min-width: 150px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+                    <strong style="color: #856404;">${team.name}</strong>
+                    <div style="margin-top: 5px;">
+                        <span style="background: #856404; color: white; padding: 3px 10px; border-radius: 15px; font-size: 0.9rem;">
+                            ${team.points} pts
+                        </span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+                        ${team.wins}W ${team.losses}L
+                    </div>
+                </div>
+            `;
+        });
+        
+        leaderHTML += `
+                </div>
+                <div style="margin-top: 15px; color: #856404; font-style: italic;">
+                    All tied with ${highestPoints} points
+                </div>
+            </div>
+        `;
+    }
+    
+    // Show 2nd and 3rd place if they exist and are not tied for 1st
+    const secondPlaceTeams = sortedTeams.filter(team => 
+        team.points < highestPoints && 
+        team.points === sortedTeams[topTeams.length]?.points
+    );
+    
+    const thirdPlaceTeams = sortedTeams.filter(team => 
+        team.points < highestPoints && 
+        team.points < secondPlaceTeams[0]?.points && 
+        team.points === sortedTeams[topTeams.length + secondPlaceTeams.length]?.points
+    );
+    
+    if (secondPlaceTeams.length > 0) {
+        leaderHTML += `
+            <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                <span style="color: #6c757d;">🥈</span>
+                <strong style="color: #6c757d;">2nd Place:</strong>
+                ${secondPlaceTeams.map(team => 
+                    `<span style="margin-left: 10px;">${team.name} (${team.points} pts)</span>`
+                ).join('')}
+            </div>
+        `;
+    }
+    
+    if (thirdPlaceTeams.length > 0) {
+        leaderHTML += `
+            <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                <span style="color: #cd7f32;">🥉</span>
+                <strong style="color: #cd7f32;">3rd Place:</strong>
+                ${thirdPlaceTeams.map(team => 
+                    `<span style="margin-left: 10px;">${team.name} (${team.points} pts)</span>`
+                ).join('')}
+            </div>
+        `;
+    }
+    
+    document.getElementById('currentLeader').innerHTML = leaderHTML;
+}
 
     function updateTeamSelects() {
         const selects = ['newTeam1', 'newTeam2'];
