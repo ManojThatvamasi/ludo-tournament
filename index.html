@@ -579,7 +579,7 @@
             color: #cd7f32;
         }
 
-        /* Add to CSS section */
+        /* Playoff CSS */
         .playoff-match-card {
             background: white;
             border-radius: 10px;
@@ -663,6 +663,23 @@
             color: var(--success);
         }
         
+        .tournament-phase {
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        
+        .phase-league {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .phase-playoffs {
+            background: #fff3e0;
+            color: #f57c00;
+        }
     </style>
 </head>
 <body>
@@ -699,6 +716,9 @@
             <div>
                 <h1>🏆 MC Boys LUDO Tournament</h1>
                 <p>Season -1 2025 - Competitive LUDO Championship</p>
+                <div id="tournamentPhase" class="tournament-phase phase-league">
+                    <i class="fas fa-list-ol"></i> League Phase
+                </div>
             </div>
             <div class="user-info">
                 <span id="connectionStatus" style="background: var(--success); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; display: none;">
@@ -805,7 +825,6 @@
                     <i class="fas fa-redo"></i> Show All Teams
                 </button>
             </div>
-            
         </div>
 
         <!-- Schedule Tab -->
@@ -825,19 +844,14 @@
                         <label>Team 1</label>
                         <select id="newTeam1" class="form-control">
                             <option value="">Select Team 1</option>
-                            <!-- Teams will be populated by JavaScript -->
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Team 2</label>
                         <select id="newTeam2" class="form-control">
                             <option value="">Select Team 2</option>
-                            <!-- Teams will be populated by JavaScript -->
                         </select>
                     </div>
-
-                   
-
                 </div>
                 <button class="btn" onclick="addNewMatch()">
                     <i class="fas fa-plus"></i> Add Match
@@ -925,6 +939,7 @@
                 <input type="file" id="importFile" accept=".json" style="display: none;">
             </div>
 
+            <!-- Playoff / Qualifier Management -->
             <div class="card">
                 <h3 class="card-title"><i class="fas fa-trophy"></i> Playoff / Qualifier Management</h3>
                 
@@ -936,21 +951,16 @@
                     <p style="margin-bottom: 15px; color: var(--gray);">
                         Complete the league stage to start playoffs/qualifiers
                     </p>
-                    <button class="btn ${tournamentData.seasonCompleted ? 'btn-warning' : 'btn-success'}" 
-                            onclick="completeLeagueStage()" id="completeLeagueBtn">
-                        <i class="fas ${tournamentData.seasonCompleted ? 'fa-redo' : 'fa-check'}"></i> 
-                        ${tournamentData.seasonCompleted ? 'Re-open League Stage' : 'Complete League Stage'}
+                    <button class="btn" onclick="completeLeagueStage()" id="completeLeagueBtn">
+                        <i class="fas fa-check"></i> Complete League Stage
                     </button>
                     <div style="margin-top: 10px; font-size: 0.9rem;">
-                        Status: <span id="leagueStatus" style="font-weight: bold;">
-                            ${tournamentData.seasonCompleted ? 'Completed ✅' : 'Ongoing ⏳'}
-                        </span>
+                        Status: <span id="leagueStatus" style="font-weight: bold;">Ongoing ⏳</span>
                     </div>
                 </div>
-            
+                
                 <!-- Playoff Setup Section -->
-                <div id="playoffSetupSection" style="${tournamentData.seasonCompleted ? '' : 'display: none;'} 
-                        margin-bottom: 20px; padding: 15px; background: #e8f4fd; border-radius: 8px;">
+                <div id="playoffSetupSection" style="display: none; margin-bottom: 20px; padding: 15px; background: #e8f4fd; border-radius: 8px;">
                     <h4 style="margin-bottom: 10px; color: var(--dark);">
                         <i class="fas fa-play"></i> Setup Playoffs
                     </h4>
@@ -958,7 +968,7 @@
                         <div class="form-group">
                             <label>Number of Teams for Playoffs</label>
                             <input type="number" id="playoffTeamsCount" class="form-control" 
-                                   min="2" max="8" value="${tournamentData.playoffTeamsCount || 4}">
+                                   min="2" max="8" value="4">
                         </div>
                     </div>
                     <button class="btn" onclick="setupPlayoffs()">
@@ -973,10 +983,9 @@
                         </div>
                     </div>
                 </div>
-            
+                
                 <!-- Playoff Matches Management -->
-                <div id="playoffMatchesSection" style="${tournamentData.playoffStage === 'ongoing' ? '' : 'display: none;'} 
-                        padding: 15px; background: #f0f9ff; border-radius: 8px;">
+                <div id="playoffMatchesSection" style="display: none; padding: 15px; background: #f0f9ff; border-radius: 8px;">
                     <h4 style="margin-bottom: 10px; color: var(--dark);">
                         <i class="fas fa-gamepad"></i> Playoff Matches
                     </h4>
@@ -1009,14 +1018,13 @@
                             <i class="fas fa-plus"></i> Add Playoff Match
                         </button>
                     </div>
-            
+                    
                     <!-- Playoff Matches List -->
                     <div id="playoffMatchesList">
                         <!-- Playoff matches will appear here -->
                     </div>
                 </div>
             </div>
-            
         </div>
     </div>
 
@@ -1049,31 +1057,37 @@
     let tournamentData = {
         teams: [],
         matches: [],
-        playoffMatches: [], 
+        playoffMatches: [],
         passwords: { admin: "", viewer: "" },
         nextTeamId: 1,
         nextMatchId: 1,
         nextPlayoffMatchId: 1,
-        seasonCompleted: false, 
-        playoffTeamsCount: 0, 
+        seasonCompleted: false,
+        playoffTeamsCount: 0,
         playoffStage: 'not_started'
     };
 
     let currentUser = null;
     let isDragging = false;
     let draggedElement = null;
-    let passwordsLoaded = false;  
+    let passwordsLoaded = false;
+    let considerTeamsCount = 0;
 
     // ==================== FIREBASE DATA MANAGEMENT ====================
     async function saveData() {
-         tournamentData = {
-                ...tournamentData,
-                playoffMatches: tournamentData.playoffMatches || [],
-                nextPlayoffMatchId: tournamentData.nextPlayoffMatchId || 1,
-                seasonCompleted: tournamentData.seasonCompleted || false,
-                playoffTeamsCount: tournamentData.playoffTeamsCount || 0,
-                playoffStage: tournamentData.playoffStage || 'not_started'
-            };
+        tournamentData = {
+            teams: tournamentData.teams || [],
+            matches: tournamentData.matches || [],
+            playoffMatches: tournamentData.playoffMatches || [],
+            passwords: tournamentData.passwords || { admin: "", viewer: "" },
+            nextTeamId: tournamentData.nextTeamId || 1,
+            nextMatchId: tournamentData.nextMatchId || 1,
+            nextPlayoffMatchId: tournamentData.nextPlayoffMatchId || 1,
+            seasonCompleted: tournamentData.seasonCompleted || false,
+            playoffTeamsCount: tournamentData.playoffTeamsCount || 0,
+            playoffStage: tournamentData.playoffStage || 'not_started'
+        };
+        
         if (db && isFirebaseConnected) {
             try {
                 await db.collection('tournament').doc('data').set(tournamentData);
@@ -1086,59 +1100,34 @@
             localStorage.setItem('ludoTournamentData', JSON.stringify(tournamentData));
         }
         updateAllDisplays();
+        updateTournamentPhaseDisplay();
     }  
 
-        function updateAdminUIState() {
-    // Update league completion button
-    const completeBtn = document.getElementById('completeLeagueBtn');
-    if (completeBtn) {
-        completeBtn.className = `btn ${tournamentData.seasonCompleted ? 'btn-warning' : 'btn-success'}`;
-        completeBtn.innerHTML = `
-            <i class="fas ${tournamentData.seasonCompleted ? 'fa-redo' : 'fa-check'}"></i> 
-            ${tournamentData.seasonCompleted ? 'Re-open League Stage' : 'Complete League Stage'}
-        `;
-    }
-    
-    // Update league status
-    const leagueStatus = document.getElementById('leagueStatus');
-    if (leagueStatus) {
-        leagueStatus.innerHTML = tournamentData.seasonCompleted ? 'Completed ✅' : 'Ongoing ⏳';
-    }
-    
-    // Show/hide playoff sections
-    const playoffSetup = document.getElementById('playoffSetupSection');
-    if (playoffSetup) {
-        playoffSetup.style.display = tournamentData.seasonCompleted ? 'block' : 'none';
-    }
-    
-    const playoffMatches = document.getElementById('playoffMatchesSection');
-    if (playoffMatches) {
-        playoffMatches.style.display = tournamentData.playoffStage === 'ongoing' ? 'block' : 'none';
-    }
-    
-    // Update playoff teams count input
-    const playoffCountInput = document.getElementById('playoffTeamsCount');
-    if (playoffCountInput) {
-        playoffCountInput.value = tournamentData.playoffTeamsCount || 4;
-    }
-    
-    // Update displays
-    updateQualifiedTeamsDisplay();
-    updatePlayoffTeamSelects();
-    updatePlayoffMatchesDisplay();
-}
-        
     function loadData() {
         if (db && isFirebaseConnected) {
             showLoadingMessage('Loading from database...');
 
             db.collection('tournament').doc('data').get().then((doc) => {
                 if (doc.exists) {
-                    tournamentData = doc.data();
+                    const loadedData = doc.data();
+                    tournamentData = {
+                        teams: loadedData.teams || [],
+                        matches: loadedData.matches || [],
+                        playoffMatches: loadedData.playoffMatches || [],
+                        passwords: loadedData.passwords || { admin: "admin123", viewer: "view123" },
+                        nextTeamId: loadedData.nextTeamId || 1,
+                        nextMatchId: loadedData.nextMatchId || 1,
+                        nextPlayoffMatchId: loadedData.nextPlayoffMatchId || 1,
+                        seasonCompleted: loadedData.seasonCompleted || false,
+                        playoffTeamsCount: loadedData.playoffTeamsCount || 0,
+                        playoffStage: loadedData.playoffStage || 'not_started'
+                    };
                     passwordsLoaded = true;
                     hideLoadingMessage();
-                    console.log('✅ Passwords loaded from Firebase');
+                    console.log('✅ Data loaded from Firebase');
                     updateAllDisplays();
+                    updateTournamentPhaseDisplay();
+                    updateAdminUIState();
                 } else {
                     initializeFirstTimeData();
                 }
@@ -1165,7 +1154,19 @@
     function loadFromLocalStorage() {
         const saved = localStorage.getItem('ludoTournamentData');
         if (saved) {
-            tournamentData = JSON.parse(saved);
+            const loadedData = JSON.parse(saved);
+            tournamentData = {
+                teams: loadedData.teams || [],
+                matches: loadedData.matches || [],
+                playoffMatches: loadedData.playoffMatches || [],
+                passwords: loadedData.passwords || { admin: "admin123", viewer: "view123" },
+                nextTeamId: loadedData.nextTeamId || 1,
+                nextMatchId: loadedData.nextMatchId || 1,
+                nextPlayoffMatchId: loadedData.nextPlayoffMatchId || 1,
+                seasonCompleted: loadedData.seasonCompleted || false,
+                playoffTeamsCount: loadedData.playoffTeamsCount || 0,
+                playoffStage: loadedData.playoffStage || 'not_started'
+            };
             passwordsLoaded = true;
         } else {
             tournamentData.passwords = { admin: "admin123", viewer: "view123" };
@@ -1174,6 +1175,8 @@
         }
         hideLoadingMessage();
         updateAllDisplays();
+        updateTournamentPhaseDisplay();
+        updateAdminUIState();
     }  
 
     function showLoadingMessage(message) {
@@ -1184,6 +1187,23 @@
 
     function hideLoadingMessage() {
         document.getElementById('loginHelp').style.display = 'none';
+    }
+
+    // ==================== TOURNAMENT PHASE DISPLAY ====================
+    function updateTournamentPhaseDisplay() {
+        const phaseElement = document.getElementById('tournamentPhase');
+        if (!phaseElement) return;
+        
+        if (tournamentData.seasonCompleted && tournamentData.playoffStage === 'ongoing') {
+            phaseElement.innerHTML = '<i class="fas fa-trophy"></i> Playoff Phase';
+            phaseElement.className = 'tournament-phase phase-playoffs';
+        } else if (tournamentData.seasonCompleted) {
+            phaseElement.innerHTML = '<i class="fas fa-flag-checkered"></i> League Completed';
+            phaseElement.className = 'tournament-phase phase-playoffs';
+        } else {
+            phaseElement.innerHTML = '<i class="fas fa-list-ol"></i> League Phase';
+            phaseElement.className = 'tournament-phase phase-league';
+        }
     }
 
     // ==================== AUTHENTICATION SYSTEM ====================
@@ -1234,361 +1254,385 @@
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('appContainer').style.display = 'none';
         document.getElementById('password').value = '';
-        selectRole('viewer'); // reset role on logout
+        selectRole('viewer');
     }  
 
     function showApp() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appContainer').style.display = 'block';
-    document.getElementById('userRoleDisplay').textContent =
-        `Logged in as ${currentUser.role}`;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'block';
+        document.getElementById('userRoleDisplay').textContent =
+            `Logged in as ${currentUser.role}`;
 
-    document.querySelectorAll('.admin-only').forEach(el => {
-        el.style.display = currentUser.role === 'admin' ? 'block' : 'none';
-    });
-    document.getElementById('adminTab').style.display =
-        currentUser.role === 'admin' ? 'flex' : 'none';
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = currentUser.role === 'admin' ? 'block' : 'none';
+        });
+        document.getElementById('adminTab').style.display =
+            currentUser.role === 'admin' ? 'flex' : 'none';
 
-    // force default tab per role
-    if (currentUser.role === 'admin') {
-        showTab('admin');
-    } else {
-        showTab('welcome');
-    }
-
-    updateAllDisplays();
-}
-
-        function completeLeagueStage() {
-    tournamentData.seasonCompleted = !tournamentData.seasonCompleted;
-    
-    if (tournamentData.seasonCompleted) {
-        // Show playoff setup section
-        document.getElementById('playoffSetupSection').style.display = 'block';
-        updateQualifiedTeamsDisplay();
-        alert('League stage completed! You can now setup playoffs.');
-    } else {
-        // Hide playoff sections
-        document.getElementById('playoffSetupSection').style.display = 'none';
-        document.getElementById('playoffMatchesSection').style.display = 'none';
-        tournamentData.playoffStage = 'not_started';
-        alert('League stage re-opened for modifications.');
-    }
-    
-    saveData();
-}
-
-// ==================== PLAYOFF SETUP ====================
-function setupPlayoffs() {
-    const countInput = document.getElementById('playoffTeamsCount');
-    const count = parseInt(countInput.value);
-    
-    if (isNaN(count) || count < 2 || count > tournamentData.teams.length) {
-        alert(`Please enter a valid number between 2 and ${tournamentData.teams.length}`);
-        return;
-    }
-    
-    tournamentData.playoffTeamsCount = count;
-    tournamentData.playoffStage = 'ongoing';
-    
-    // Clear existing playoff matches
-    tournamentData.playoffMatches = [];
-    tournamentData.nextPlayoffMatchId = 1;
-    
-    // Show playoff matches section
-    document.getElementById('playoffMatchesSection').style.display = 'block';
-    
-    // Update qualified teams display
-    updateQualifiedTeamsDisplay();
-    
-    // Update team selects for playoff matches
-    updatePlayoffTeamSelects();
-    
-    // Update playoff matches list
-    updatePlayoffMatchesDisplay();
-    
-    saveData();
-    
-    alert(`Playoffs setup complete! Top ${count} teams will compete in playoffs.`);
-}
-
-// ==================== QUALIFIED TEAMS DISPLAY ====================
-function updateQualifiedTeamsDisplay() {
-    if (!tournamentData.seasonCompleted) return;
-    
-    const qualifiedTeamsDiv = document.getElementById('qualifiedTeamsDisplay');
-    const teamsListDiv = document.getElementById('qualifiedTeamsList');
-    
-    // Sort teams by points (with tiebreaker: fewer matches first)
-    const sortedTeams = [...tournamentData.teams].sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        return a.matches - b.matches;
-    });
-    
-    // Get qualified teams
-    const qualifiedTeams = sortedTeams.slice(0, tournamentData.playoffTeamsCount || 4);
-    
-    if (qualifiedTeams.length === 0) {
-        qualifiedTeamsDiv.style.display = 'none';
-        return;
-    }
-    
-    qualifiedTeamsDiv.style.display = 'block';
-    teamsListDiv.innerHTML = '';
-    
-    qualifiedTeams.forEach((team, index) => {
-        const teamBadge = document.createElement('div');
-        teamBadge.className = 'qualified-team-badge';
-        teamBadge.innerHTML = `
-            <span>${index + 1}. ${team.name}</span>
-            <small>(${team.points} pts)</small>
-        `;
-        teamsListDiv.appendChild(teamBadge);
-    });
-}
-
-// ==================== PLAYOFF MATCH MANAGEMENT ====================
-function updatePlayoffTeamSelects() {
-    const sortedTeams = [...tournamentData.teams].sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        return a.matches - b.matches;
-    });
-    
-    const qualifiedTeams = sortedTeams.slice(0, tournamentData.playoffTeamsCount || 4);
-    
-    const team1Select = document.getElementById('playoffTeam1');
-    const team2Select = document.getElementById('playoffTeam2');
-    
-    team1Select.innerHTML = '<option value="">Select Team 1</option>';
-    team2Select.innerHTML = '<option value="">Select Team 2</option>';
-    
-    qualifiedTeams.forEach(team => {
-        const option1 = document.createElement('option');
-        option1.value = team.id;
-        option1.textContent = `${team.name} (${team.points} pts)`;
-        
-        const option2 = option1.cloneNode(true);
-        
-        team1Select.appendChild(option1);
-        team2Select.appendChild(option2);
-    });
-}
-
-function addPlayoffMatch() {
-    const matchName = document.getElementById('playoffMatchName').value.trim();
-    const team1Id = parseInt(document.getElementById('playoffTeam1').value);
-    const team2Id = parseInt(document.getElementById('playoffTeam2').value);
-    
-    if (!matchName) {
-        alert('Please enter a match name (e.g., Eliminator, Semi-Final, Final)');
-        return;
-    }
-    
-    if (!team1Id || !team2Id) {
-        alert('Please select both teams');
-        return;
-    }
-    
-    if (team1Id === team2Id) {
-        alert('Please select two different teams');
-        return;
-    }
-    
-    // Check if this playoff match already exists
-    const duplicateMatch = tournamentData.playoffMatches.find(match => 
-        match.name === matchName || 
-        (match.team1 === team1Id && match.team2 === team2Id) ||
-        (match.team1 === team2Id && match.team2 === team1Id)
-    );
-    
-    if (duplicateMatch) {
-        alert('This playoff match already exists!');
-        return;
-    }
-    
-    // Add playoff match
-    tournamentData.playoffMatches.push({
-        id: tournamentData.nextPlayoffMatchId++,
-        name: matchName,
-        team1: team1Id,
-        team2: team2Id,
-        winner: null,
-        completed: false,
-        resultTimestamp: null
-    });
-    
-    // Clear inputs
-    document.getElementById('playoffMatchName').value = '';
-    document.getElementById('playoffTeam1').value = '';
-    document.getElementById('playoffTeam2').value = '';
-    
-    updatePlayoffMatchesDisplay();
-    saveData();
-}
-
-function updatePlayoffMatchesDisplay() {
-    const container = document.getElementById('playoffMatchesList');
-    container.innerHTML = '';
-    
-    if (tournamentData.playoffMatches.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state" style="text-align: center; padding: 30px; color: var(--gray);">
-                <i class="fas fa-trophy" style="font-size: 3rem; opacity: 0.5;"></i>
-                <h3>No Playoff Matches Yet</h3>
-                <p>Add playoff matches using the form above</p>
-            </div>
-        `;
-        return;
-    }
-    
-    tournamentData.playoffMatches.forEach(match => {
-        const team1 = tournamentData.teams.find(t => t.id === match.team1);
-        const team2 = tournamentData.teams.find(t => t.id === match.team2);
-        
-        if (!team1 || !team2) return;
-        
-        const matchCard = document.createElement('div');
-        matchCard.className = 'playoff-match-card';
-        
-        let statusHtml = '<span class="playoff-status-badge playoff-pending">⏳ Pending</span>';
-        let winnerSelect = '';
-        let resultActions = '';
-        
-        if (match.completed) {
-            const winnerTeam = tournamentData.teams.find(t => t.id === match.winner);
-            statusHtml = `
-                <span class="playoff-status-badge playoff-completed">✅ Completed</span>
-                <div style="margin-top: 5px; color: var(--success); font-weight: bold;">
-                    Winner: ${winnerTeam ? winnerTeam.name : 'Unknown'}
-                </div>
-            `;
+        if (currentUser.role === 'admin') {
+            showTab('admin');
         } else {
-            winnerSelect = `
-                <select id="playoffWinner-${match.id}" class="form-control" style="margin-bottom: 10px;">
-                    <option value="">Select Winner</option>
-                    <option value="${team1.id}">${team1.name}</option>
-                    <option value="${team2.id}">${team2.name}</option>
-                </select>
-                <button class="btn btn-sm btn-success" onclick="updatePlayoffMatchResult(${match.id})">
-                    <i class="fas fa-check"></i> Set Result
-                </button>
-            `;
+            showTab('welcome');
+        }
+
+        updateAllDisplays();
+        updateTournamentPhaseDisplay();
+        updateAdminUIState();
+    }
+
+    // ==================== PLAYOFF MANAGEMENT ====================
+    function completeLeagueStage() {
+        tournamentData.seasonCompleted = !tournamentData.seasonCompleted;
+        
+        if (tournamentData.seasonCompleted) {
+            document.getElementById('playoffSetupSection').style.display = 'block';
+            updateQualifiedTeamsDisplay();
+            alert('✅ League stage completed! You can now setup playoffs.');
+        } else {
+            document.getElementById('playoffSetupSection').style.display = 'none';
+            document.getElementById('playoffMatchesSection').style.display = 'none';
+            document.getElementById('qualifiedTeamsDisplay').style.display = 'none';
+            tournamentData.playoffStage = 'not_started';
+            tournamentData.playoffTeamsCount = 0;
+            alert('🔄 League stage re-opened for modifications.');
         }
         
-        matchCard.innerHTML = `
-            <div class="playoff-match-header">
-                <div>
-                    <div class="playoff-match-name">${match.name}</div>
-                    <div style="font-size: 0.9rem; color: var(--gray);">
-                        Playoff Match #${match.id}
-                    </div>
-                </div>
-                <div>${statusHtml}</div>
-            </div>
-            
-            <div class="playoff-teams">
-                <div class="playoff-team">
-                    <div style="font-weight: bold; font-size: 1.1rem;">${team1.name}</div>
-                    <div style="font-size: 0.9rem; color: var(--gray); margin-top: 5px;">
-                        ${team1.player1}, ${team1.player2}
-                    </div>
-                    <div style="margin-top: 10px; color: var(--primary);">
-                        ${team1.points} pts • ${team1.wins}W ${team1.losses}L
-                    </div>
-                </div>
-                
-                <div class="playoff-vs">VS</div>
-                
-                <div class="playoff-team">
-                    <div style="font-weight: bold; font-size: 1.1rem;">${team2.name}</div>
-                    <div style="font-size: 0.9rem; color: var(--gray); margin-top: 5px;">
-                        ${team2.player1}, ${team2.player2}
-                    </div>
-                    <div style="margin-top: 10px; color: var(--primary);">
-                        ${team2.points} pts • ${team2.wins}W ${team2.losses}L
-                    </div>
-                </div>
-            </div>
-            
-            <div class="playoff-actions">
-                ${winnerSelect}
-                <button class="btn btn-sm btn-danger" onclick="deletePlayoffMatch(${match.id})" 
-                        style="margin-left: 10px;">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
-        `;
+        updateAdminUIState();
+        updateTournamentPhaseDisplay();
+        saveData();
+    }
+
+    function setupPlayoffs() {
+        const countInput = document.getElementById('playoffTeamsCount');
+        const count = parseInt(countInput.value);
         
-        container.appendChild(matchCard);
-    });
-}
-
-function updatePlayoffMatchResult(matchId) {
-    const winnerSelect = document.getElementById(`playoffWinner-${matchId}`);
-    const winnerId = parseInt(winnerSelect.value);
-    
-    if (!winnerId) {
-        alert('Please select a winner');
-        return;
+        if (isNaN(count) || count < 2 || count > tournamentData.teams.length) {
+            alert(`❌ Please enter a valid number between 2 and ${tournamentData.teams.length}`);
+            return;
+        }
+        
+        tournamentData.playoffTeamsCount = count;
+        tournamentData.playoffStage = 'ongoing';
+        tournamentData.playoffMatches = tournamentData.playoffMatches || [];
+        
+        document.getElementById('playoffMatchesSection').style.display = 'block';
+        document.getElementById('qualifiedTeamsDisplay').style.display = 'block';
+        
+        updateQualifiedTeamsDisplay();
+        updatePlayoffTeamSelects();
+        updatePlayoffMatchesDisplay();
+        updateTournamentPhaseDisplay();
+        saveData();
+        
+        alert(`✅ Playoffs setup complete! Top ${count} teams will compete in playoffs.`);
     }
-    
-    const match = tournamentData.playoffMatches.find(m => m.id === matchId);
-    if (!match || match.completed) return;
-    
-    match.winner = winnerId;
-    match.completed = true;
-    match.resultTimestamp = new Date().toISOString();
-    
-    // Update team stats (optional - playoff wins don't affect league points)
-    const winner = tournamentData.teams.find(t => t.id === winnerId);
-    const loser = tournamentData.teams.find(t => 
-        t.id === (match.team1 === winnerId ? match.team2 : match.team1));
-    
-    // You can track playoff stats separately if needed
-    // For now, just mark the playoff match as completed
-    
-    updatePlayoffMatchesDisplay();
-    saveData();
-    
-    alert(`${winner.name} wins the ${match.name}!`);
-}
 
-function deletePlayoffMatch(matchId) {
-    if (!confirm('Are you sure you want to delete this playoff match?')) return;
-    
-    tournamentData.playoffMatches = tournamentData.playoffMatches.filter(
-        match => match.id !== matchId
-    );
-    
-    updatePlayoffMatchesDisplay();
-    saveData();
-}
-
-        let considerTeamsCount = 0; // 0 means show all teams
-
-function applyTeamConsideration() {
-    const countInput = document.getElementById('considerTeamsCount');
-    const count = parseInt(countInput.value);
-    
-    if (isNaN(count) || count < 1) {
-        considerTeamsCount = 0; // Show all
-        alert('Showing all teams');
-    } else {
-        considerTeamsCount = count;
-        alert(`Now showing top ${count} teams only`);
+    function updateQualifiedTeamsDisplay() {
+        if (!tournamentData.seasonCompleted) {
+            document.getElementById('qualifiedTeamsDisplay').style.display = 'none';
+            return;
+        }
+        
+        const qualifiedTeamsDiv = document.getElementById('qualifiedTeamsDisplay');
+        const teamsListDiv = document.getElementById('qualifiedTeamsList');
+        
+        const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return a.matches - b.matches;
+        });
+        
+        const qualifiedTeams = sortedTeams.slice(0, tournamentData.playoffTeamsCount || 4);
+        
+        if (qualifiedTeams.length === 0) {
+            qualifiedTeamsDiv.style.display = 'none';
+            return;
+        }
+        
+        qualifiedTeamsDiv.style.display = 'block';
+        teamsListDiv.innerHTML = '';
+        
+        qualifiedTeams.forEach((team, index) => {
+            const teamBadge = document.createElement('div');
+            teamBadge.className = 'qualified-team-badge';
+            teamBadge.innerHTML = `
+                <span>${index + 1}. ${team.name}</span>
+                <small>(${team.points} pts)</small>
+            `;
+            teamsListDiv.appendChild(teamBadge);
+        });
     }
-    
-    updatePointsTable();
-    updateLeaderDisplay();
-}
 
-function resetTeamConsideration() {
-    considerTeamsCount = 0;
-    document.getElementById('considerTeamsCount').value = '';
-    updatePointsTable();
-    updateLeaderDisplay();
-}
+    function updatePlayoffTeamSelects() {
+        const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return a.matches - b.matches;
+        });
+        
+        const qualifiedTeams = sortedTeams.slice(0, tournamentData.playoffTeamsCount || 4);
+        
+        const team1Select = document.getElementById('playoffTeam1');
+        const team2Select = document.getElementById('playoffTeam2');
+        
+        if (!team1Select || !team2Select) return;
+        
+        team1Select.innerHTML = '<option value="">Select Team 1</option>';
+        team2Select.innerHTML = '<option value="">Select Team 2</option>';
+        
+        qualifiedTeams.forEach(team => {
+            const option1 = document.createElement('option');
+            option1.value = team.id;
+            option1.textContent = `${team.name} (${team.points} pts)`;
+            
+            const option2 = option1.cloneNode(true);
+            
+            team1Select.appendChild(option1);
+            team2Select.appendChild(option2);
+        });
+    }
 
+    function addPlayoffMatch() {
+        const matchName = document.getElementById('playoffMatchName').value.trim();
+        const team1Id = parseInt(document.getElementById('playoffTeam1').value);
+        const team2Id = parseInt(document.getElementById('playoffTeam2').value);
+        
+        if (!matchName) {
+            alert('Please enter a match name (e.g., Eliminator, Semi-Final, Final)');
+            return;
+        }
+        
+        if (!team1Id || !team2Id) {
+            alert('Please select both teams');
+            return;
+        }
+        
+        if (team1Id === team2Id) {
+            alert('Please select two different teams');
+            return;
+        }
+        
+        tournamentData.playoffMatches = tournamentData.playoffMatches || [];
+        
+        const duplicateMatch = tournamentData.playoffMatches.find(match => 
+            match.name === matchName || 
+            (match.team1 === team1Id && match.team2 === team2Id) ||
+            (match.team1 === team2Id && match.team2 === team1Id)
+        );
+        
+        if (duplicateMatch) {
+            alert('This playoff match already exists!');
+            return;
+        }
+        
+        tournamentData.playoffMatches.push({
+            id: tournamentData.nextPlayoffMatchId++,
+            name: matchName,
+            team1: team1Id,
+            team2: team2Id,
+            winner: null,
+            completed: false,
+            resultTimestamp: null
+        });
+        
+        document.getElementById('playoffMatchName').value = '';
+        document.getElementById('playoffTeam1').value = '';
+        document.getElementById('playoffTeam2').value = '';
+        
+        updatePlayoffMatchesDisplay();
+        saveData();
+    }
+
+    function updatePlayoffMatchesDisplay() {
+        const container = document.getElementById('playoffMatchesList');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (!tournamentData.playoffMatches || tournamentData.playoffMatches.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state" style="text-align: center; padding: 30px; color: var(--gray);">
+                    <i class="fas fa-trophy" style="font-size: 3rem; opacity: 0.5;"></i>
+                    <h3>No Playoff Matches Yet</h3>
+                    <p>Add playoff matches using the form above</p>
+                </div>
+            `;
+            return;
+        }
+        
+        tournamentData.playoffMatches.forEach(match => {
+            const team1 = tournamentData.teams.find(t => t.id === match.team1);
+            const team2 = tournamentData.teams.find(t => t.id === match.team2);
+            
+            if (!team1 || !team2) return;
+            
+            const matchCard = document.createElement('div');
+            matchCard.className = 'playoff-match-card';
+            
+            let statusHtml = '<span class="playoff-status-badge playoff-pending">⏳ Pending</span>';
+            let winnerSelect = '';
+            
+            if (match.completed) {
+                const winnerTeam = tournamentData.teams.find(t => t.id === match.winner);
+                statusHtml = `
+                    <span class="playoff-status-badge playoff-completed">✅ Completed</span>
+                    <div style="margin-top: 5px; color: var(--success); font-weight: bold;">
+                        Winner: ${winnerTeam ? winnerTeam.name : 'Unknown'}
+                    </div>
+                `;
+            } else {
+                winnerSelect = `
+                    <select id="playoffWinner-${match.id}" class="form-control" style="margin-bottom: 10px;">
+                        <option value="">Select Winner</option>
+                        <option value="${team1.id}">${team1.name}</option>
+                        <option value="${team2.id}">${team2.name}</option>
+                    </select>
+                    <button class="btn btn-sm btn-success" onclick="updatePlayoffMatchResult(${match.id})">
+                        <i class="fas fa-check"></i> Set Result
+                    </button>
+                `;
+            }
+            
+            matchCard.innerHTML = `
+                <div class="playoff-match-header">
+                    <div>
+                        <div class="playoff-match-name">${match.name}</div>
+                        <div style="font-size: 0.9rem; color: var(--gray);">
+                            Playoff Match #${match.id}
+                        </div>
+                    </div>
+                    <div>${statusHtml}</div>
+                </div>
+                
+                <div class="playoff-teams">
+                    <div class="playoff-team">
+                        <div style="font-weight: bold; font-size: 1.1rem;">${team1.name}</div>
+                        <div style="font-size: 0.9rem; color: var(--gray); margin-top: 5px;">
+                            ${team1.player1}, ${team1.player2}
+                        </div>
+                        <div style="margin-top: 10px; color: var(--primary);">
+                            ${team1.points} pts • ${team1.wins}W ${team1.losses}L
+                        </div>
+                    </div>
+                    
+                    <div class="playoff-vs">VS</div>
+                    
+                    <div class="playoff-team">
+                        <div style="font-weight: bold; font-size: 1.1rem;">${team2.name}</div>
+                        <div style="font-size: 0.9rem; color: var(--gray); margin-top: 5px;">
+                            ${team2.player1}, ${team2.player2}
+                        </div>
+                        <div style="margin-top: 10px; color: var(--primary);">
+                            ${team2.points} pts • ${team2.wins}W ${team2.losses}L
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="playoff-actions">
+                    ${winnerSelect}
+                    <button class="btn btn-sm btn-danger" onclick="deletePlayoffMatch(${match.id})" 
+                            style="margin-left: 10px;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(matchCard);
+        });
+    }
+
+    function updatePlayoffMatchResult(matchId) {
+        const winnerSelect = document.getElementById(`playoffWinner-${matchId}`);
+        const winnerId = parseInt(winnerSelect.value);
+        
+        if (!winnerId) {
+            alert('Please select a winner');
+            return;
+        }
+        
+        const match = tournamentData.playoffMatches.find(m => m.id === matchId);
+        if (!match || match.completed) return;
+        
+        match.winner = winnerId;
+        match.completed = true;
+        match.resultTimestamp = new Date().toISOString();
+        
+        updatePlayoffMatchesDisplay();
+        saveData();
+        
+        const winner = tournamentData.teams.find(t => t.id === winnerId);
+        alert(`${winner.name} wins the ${match.name}!`);
+    }
+
+    function deletePlayoffMatch(matchId) {
+        if (!confirm('Are you sure you want to delete this playoff match?')) return;
+        
+        tournamentData.playoffMatches = tournamentData.playoffMatches.filter(
+            match => match.id !== matchId
+        );
+        
+        updatePlayoffMatchesDisplay();
+        saveData();
+    }
+
+    function updateAdminUIState() {
+        const completeBtn = document.getElementById('completeLeagueBtn');
+        if (completeBtn) {
+            if (tournamentData.seasonCompleted) {
+                completeBtn.className = 'btn btn-warning';
+                completeBtn.innerHTML = '<i class="fas fa-redo"></i> Re-open League Stage';
+            } else {
+                completeBtn.className = 'btn btn-success';
+                completeBtn.innerHTML = '<i class="fas fa-check"></i> Complete League Stage';
+            }
+        }
+        
+        const leagueStatus = document.getElementById('leagueStatus');
+        if (leagueStatus) {
+            leagueStatus.innerHTML = tournamentData.seasonCompleted ? 'Completed ✅' : 'Ongoing ⏳';
+        }
+        
+        const playoffSetup = document.getElementById('playoffSetupSection');
+        if (playoffSetup) {
+            playoffSetup.style.display = tournamentData.seasonCompleted ? 'block' : 'none';
+        }
+        
+        const playoffMatches = document.getElementById('playoffMatchesSection');
+        if (playoffMatches) {
+            playoffMatches.style.display = tournamentData.playoffStage === 'ongoing' ? 'block' : 'none';
+        }
+        
+        const playoffCountInput = document.getElementById('playoffTeamsCount');
+        if (playoffCountInput) {
+            playoffCountInput.value = tournamentData.playoffTeamsCount || 4;
+        }
+        
+        updateQualifiedTeamsDisplay();
+        updatePlayoffTeamSelects();
+        updatePlayoffMatchesDisplay();
+    }
+
+    // ==================== TEAM CONSIDERATION ====================
+    function applyTeamConsideration() {
+        const countInput = document.getElementById('considerTeamsCount');
+        const count = parseInt(countInput.value);
+        
+        if (isNaN(count) || count < 1) {
+            considerTeamsCount = 0;
+            alert('Showing all teams');
+        } else {
+            considerTeamsCount = count;
+            alert(`Now showing top ${count} teams only`);
+        }
+        
+        updatePointsTable();
+        updateLeaderDisplay();
+    }
+
+    function resetTeamConsideration() {
+        considerTeamsCount = 0;
+        document.getElementById('considerTeamsCount').value = '';
+        updatePointsTable();
+        updateLeaderDisplay();
+    }
 
     // ==================== PASSWORD MANAGEMENT ====================
     function updatePasswords() {
@@ -1616,7 +1660,7 @@ function resetTeamConsideration() {
         document.getElementById('viewerPassword').value = '';
 
         saveData();
-        alert('Passwords updated successfully in database!');
+        alert('Passwords updated successfully!');
     }  
 
     // ==================== TEAM MANAGEMENT ====================
@@ -1696,61 +1740,41 @@ function resetTeamConsideration() {
 
     // ==================== MATCH MANAGEMENT ====================
     function addNewMatch() {
-    const team1Select = document.getElementById('newTeam1');
-    const team2Select = document.getElementById('newTeam2');
-    const dateInput = document.getElementById('newMatchDate');
-    const timeInput = document.getElementById('newMatchTime');
+        const team1Select = document.getElementById('newTeam1');
+        const team2Select = document.getElementById('newTeam2');
 
-    if (!team1Select || !team2Select) {
-        alert('Please open the Admin Panel tab first before adding matches.');
-        return;
+        if (!team1Select || !team2Select) {
+            alert('Please open the Admin Panel tab first before adding matches.');
+            return;
+        }
+        
+        const team1 = parseInt(team1Select.value);
+        const team2 = parseInt(team2Select.value);
+
+        if (!team1 || !team2) {
+            alert('Please select both teams');
+            return;
+        }
+
+        if (team1 === team2) {
+            alert('Please select two different teams');
+            return;
+        }
+
+        tournamentData.matches.push({
+            id: tournamentData.nextMatchId++,
+            team1,
+            team2,
+            winner: null,
+            completed: false,
+            date: '',
+            time: ''
+        });
+
+        team1Select.value = '';
+        team2Select.value = '';
+        saveData();
     }
-    const team1 = parseInt(team1Select.value);
-    const team2 = parseInt(team2Select.value);
-
-    if (!team1 || !team2) {
-        alert('Please select both teams');
-        return;
-    }
-
-    if (team1 === team2) {
-        alert('Please select two different teams');
-        return;
-    }
-
-    const date = dateInput ? dateInput.value : '';
-    const time = timeInput ? timeInput.value : '';
-
-    // If scheduling is required, validate date and time - optional
-    // if (!date) { alert('Please select a match date'); return; }
-    // if (!time) { alert('Please select a match time'); return; }
-
-    // Check for duplicate match with same teams and date/time if used
-    // if (tournamentData.matches.some(m =>
-    //     m.team1 === team1 && m.team2 === team2 && m.date === date && m.time === time)) {
-    //     alert('This match with same teams and schedule already exists!');
-    //     return;
-    // }
-
-    tournamentData.matches.push({
-        id: tournamentData.nextMatchId++,
-        team1,
-        team2,
-        winner: null,
-        completed: false,
-        date,  // optional if not used, pass blank string
-        time   // optional if not used, pass blank string
-    });
-
-    // Clear inputs after adding
-    team1Select.value = '';
-    team2Select.value = '';
-    if (dateInput) dateInput.value = '';
-    if (timeInput) timeInput.value = '';
-
-    saveData();
-}
-
 
     function deleteMatch(matchId) {
         if (!confirm('Are you sure you want to delete this match?')) {
@@ -1796,8 +1820,6 @@ function resetTeamConsideration() {
     
         match.winner = winnerId;
         match.completed = true;
-    
-        // Save the current date/time (ISO string) for match completion
         match.resultTimestamp = new Date().toISOString();
     
         const winner = tournamentData.teams.find(t => t.id === winnerId);
@@ -1814,17 +1836,22 @@ function resetTeamConsideration() {
         saveData();
     }
 
-
     // ==================== TOURNAMENT OPERATIONS ====================
     function resetTournament() {
         if (confirm('Are you sure you want to reset all tournament data? This will delete all teams, matches, and reset everything!')) {
             tournamentData = {
                 teams: [],
                 matches: [],
+                playoffMatches: [],
                 passwords: tournamentData.passwords,
                 nextTeamId: 1,
-                nextMatchId: 1
+                nextMatchId: 1,
+                nextPlayoffMatchId: 1,
+                seasonCompleted: false,
+                playoffTeamsCount: 0,
+                playoffStage: 'not_started'
             };
+            considerTeamsCount = 0;
             saveData();
         }
     }  
@@ -1839,86 +1866,75 @@ function resetTeamConsideration() {
     }  
 
     function updatePointsTable() {
-    const tbody = document.getElementById('points-table-body');
-    const pointsTable = document.getElementById('points-table');
-    const emptyState = document.getElementById('points-empty');
+        const tbody = document.getElementById('points-table-body');
+        const pointsTable = document.getElementById('points-table');
+        const emptyState = document.getElementById('points-empty');
 
-    tbody.innerHTML = '';
+        tbody.innerHTML = '';
 
-    if (tournamentData.teams.length === 0) {
-        pointsTable.style.display = 'none';
-        emptyState.style.display = 'block';
-        return;
-    }
-
-    pointsTable.style.display = 'table';
-    emptyState.style.display = 'none';
-
-    // Sort teams by points (descending)
-    const sortedTeams = [...tournamentData.teams].sort((a, b) => {
-        // 1. First sort by points (higher points first)
-        if (b.points !== a.points) {
-            return b.points - a.points;
+        if (tournamentData.teams.length === 0) {
+            pointsTable.style.display = 'none';
+            emptyState.style.display = 'block';
+            return;
         }
-        // 2. If points are equal, sort by matches played (fewer matches first)
-        return a.matches - b.matches;
-    });
+
+        pointsTable.style.display = 'table';
+        emptyState.style.display = 'none';
+
+        const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return a.matches - b.matches;
+        });
 
         const displayTeams = considerTeamsCount > 0 
-        ? sortedTeams.slice(0, considerTeamsCount)
-        : sortedTeams;
-    
-   
-    // Group teams by points to determine ranks
-    const teamsByPoints = {};
-    sortedTeams.forEach(team => {
-        if (!teamsByPoints[team.points]) {
-            teamsByPoints[team.points] = [];
-        }
-        teamsByPoints[team.points].push(team);
-    });
-
-    // Display teams with proper ranking
-    let rank = 1;
-    Object.keys(teamsByPoints).sort((a, b) => b - a).forEach(points => {
-        const teams = teamsByPoints[points];
+            ? sortedTeams.slice(0, considerTeamsCount)
+            : sortedTeams;
         
-        teams.forEach((team, index) => {
-            const row = document.createElement('tr');
-            
-            // Determine medal emoji based on rank
-            let medal = '';
-            if (rank === 1) medal = ' 🥇';
-            else if (rank === 2) medal = ' 🥈';
-            else if (rank === 3) medal = ' 🥉';
-            
-            // Set row color based on rank
-            let rowClass = '';
-            if (rank === 1) rowClass = 'position-1';
-            else if (rank === 2) rowClass = 'position-2';
-            else if (rank === 3) rowClass = 'position-3';
-            
-            row.className = rowClass;
-            
-            row.innerHTML = `
-                <td>${rank}${medal}</td>
-                <td><strong>${team.name}</strong></td>
-                <td>${team.player1}, ${team.player2}</td>
-                <td>${team.matches}</td>
-                <td>${team.wins}</td>
-                <td>${team.losses}</td>
-                <td class="team-points"><strong>${team.points}</strong></td>
-            `;
-            
-            tbody.appendChild(row);
+        const teamsByPoints = {};
+        displayTeams.forEach(team => {
+            if (!teamsByPoints[team.points]) {
+                teamsByPoints[team.points] = [];
+            }
+            teamsByPoints[team.points].push(team);
         });
-        
-        // Move to next rank (skip numbers equal to number of teams at current points)
-        rank += teams.length;
-    });
-}
 
-   function updateMatchesDisplay() {
+        let rank = 1;
+        Object.keys(teamsByPoints).sort((a, b) => b - a).forEach(points => {
+            const teams = teamsByPoints[points];
+            
+            teams.forEach((team, index) => {
+                const row = document.createElement('tr');
+                
+                let medal = '';
+                if (rank === 1) medal = ' 🥇';
+                else if (rank === 2) medal = ' 🥈';
+                else if (rank === 3) medal = ' 🥉';
+                
+                let rowClass = '';
+                if (rank === 1) rowClass = 'position-1';
+                else if (rank === 2) rowClass = 'position-2';
+                else if (rank === 3) rowClass = 'position-3';
+                
+                row.className = rowClass;
+                
+                row.innerHTML = `
+                    <td>${rank}${medal}</td>
+                    <td><strong>${team.name}</strong></td>
+                    <td>${team.player1}, ${team.player2}</td>
+                    <td>${team.matches}</td>
+                    <td>${team.wins}</td>
+                    <td>${team.losses}</td>
+                    <td class="team-points"><strong>${team.points}</strong></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            rank += teams.length;
+        });
+    }
+
+    function updateMatchesDisplay() {
         const container = document.getElementById('matches-container');
         const emptyState = document.getElementById('matches-empty');
         const reorderControls = document.getElementById('reorder-controls');
@@ -1939,7 +1955,6 @@ function resetTeamConsideration() {
             const team1 = tournamentData.teams.find(t => t.id === match.team1);
             const team2 = tournamentData.teams.find(t => t.id === match.team2);
     
-            // Handle deleted teams gracefully
             const team1Name = team1 ? team1.name : 'Deleted Team';
             const team2Name = team2 ? team2.name : 'Deleted Team';
             const team1Players = team1 ? `${team1.player1}, ${team1.player2}` : 'N/A';
@@ -1952,7 +1967,6 @@ function resetTeamConsideration() {
                 statusHtml = '<span class="match-status status-completed">✅ Completed</span>';
             }
     
-            // Show winner info if match completed
             let winnerInfo = '';
             if (match.completed) {
                 const winnerTeam = tournamentData.teams.find(t => t.id === match.winner);
@@ -1963,7 +1977,6 @@ function resetTeamConsideration() {
                 }
             }
     
-            // Show result timestamp if present
             let resultTimeDisplay = '';
             if (match.resultTimestamp) {
                 const dt = new Date(match.resultTimestamp);
@@ -2024,8 +2037,6 @@ function resetTeamConsideration() {
         });
     }
 
-
-
     function updateTeamsList() {
         const container = document.getElementById('teams-list');
         const emptyState = document.getElementById('teams-empty');
@@ -2065,129 +2076,119 @@ function resetTeamConsideration() {
         });
     }  
 
-   function updateLeaderDisplay() {
-    if (tournamentData.teams.length === 0) {
-        document.getElementById('currentLeader').innerHTML = 'No teams yet. Add teams to start the tournament!';
-        return;
-    }
-    
-    // Sort teams by points
-    const sortedTeams = [...tournamentData.teams].sort((a, b) => {
-        // 1. First sort by points (higher points first)
-        if (b.points !== a.points) {
-            return b.points - a.points;
+    function updateLeaderDisplay() {
+        if (tournamentData.teams.length === 0) {
+            document.getElementById('currentLeader').innerHTML = 'No teams yet. Add teams to start the tournament!';
+            return;
         }
-        // 2. If points are equal, sort by matches played (fewer matches first)
-        return a.matches - b.matches;
-    });
-
-       const displayTeams = considerTeamsCount > 0 
-        ? sortedTeams.slice(0, considerTeamsCount)
-        : sortedTeams;
-    
-    // Get highest points
-    const highestPoints = sortedTeams[0].points;
-    
-    // Find all teams with highest points
-    const topTeams = sortedTeams.filter(team => team.points === highestPoints);
-    
-    let leaderHTML = '';
-    
-    if (topTeams.length === 1) {
-        // Single leader
-        const leader = topTeams[0];
-        leaderHTML = `
-            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeb99 100%); border-radius: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2rem;">🥇</span>
-                <h3 style="margin: 10px 0; color: #856404;">TOURNAMENT LEADER</h3>
-                <strong style="font-size: 1.5rem; color: #856404;">${leader.name}</strong>
-                <div style="margin-top: 10px;">
-                    <span style="background: #856404; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
-                        ${leader.points} POINTS
-                    </span>
-                </div>
-                <div style="margin-top: 10px; color: #856404;">
-                    ${leader.matches} matches • ${leader.wins} wins • ${leader.losses} losses
-                </div>
-            </div>
-        `;
-    } else {
-        // Multiple teams tied for first
-        leaderHTML = `
-            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeb99 100%); border-radius: 10px; margin-bottom: 15px;">
-                <span style="font-size: 2rem;">🥇</span>
-                <h3 style="margin: 10px 0; color: #856404;">JOINT LEADERS (${topTeams.length} TEAMS)</h3>
-                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px;">
-        `;
         
-        topTeams.forEach(team => {
-            leaderHTML += `
-                <div style="background: white; padding: 10px 15px; border-radius: 8px; min-width: 150px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
-                    <strong style="color: #856404;">${team.name}</strong>
-                    <div style="margin-top: 5px;">
-                        <span style="background: #856404; color: white; padding: 3px 10px; border-radius: 15px; font-size: 0.9rem;">
-                            ${team.points} pts
+        const sortedTeams = [...tournamentData.teams].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return a.matches - b.matches;
+        });
+
+        const displayTeams = considerTeamsCount > 0 
+            ? sortedTeams.slice(0, considerTeamsCount)
+            : sortedTeams;
+        
+        const highestPoints = displayTeams[0]?.points || 0;
+        const topTeams = displayTeams.filter(team => team.points === highestPoints);
+        
+        let leaderHTML = '';
+        
+        if (topTeams.length === 1) {
+            const leader = topTeams[0];
+            leaderHTML = `
+                <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeb99 100%); border-radius: 10px; margin-bottom: 15px;">
+                    <span style="font-size: 2rem;">🥇</span>
+                    <h3 style="margin: 10px 0; color: #856404;">TOURNAMENT LEADER</h3>
+                    <strong style="font-size: 1.5rem; color: #856404;">${leader.name}</strong>
+                    <div style="margin-top: 10px;">
+                        <span style="background: #856404; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                            ${leader.points} POINTS
                         </span>
                     </div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
-                        ${team.wins}W ${team.losses}L
+                    <div style="margin-top: 10px; color: #856404;">
+                        ${leader.matches} matches • ${leader.wins} wins • ${leader.losses} losses
                     </div>
                 </div>
             `;
-        });
+        } else {
+            leaderHTML = `
+                <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #fff3cd 0%, #ffeb99 100%); border-radius: 10px; margin-bottom: 15px;">
+                    <span style="font-size: 2rem;">🥇</span>
+                    <h3 style="margin: 10px 0; color: #856404;">JOINT LEADERS (${topTeams.length} TEAMS)</h3>
+                    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px;">
+            `;
+            
+            topTeams.forEach(team => {
+                leaderHTML += `
+                    <div style="background: white; padding: 10px 15px; border-radius: 8px; min-width: 150px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+                        <strong style="color: #856404;">${team.name}</strong>
+                        <div style="margin-top: 5px;">
+                            <span style="background: #856404; color: white; padding: 3px 10px; border-radius: 15px; font-size: 0.9rem;">
+                                ${team.points} pts
+                            </span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+                            ${team.wins}W ${team.losses}L
+                        </div>
+                    </div>
+                `;
+            });
+            
+            leaderHTML += `
+                    </div>
+                    <div style="margin-top: 15px; color: #856404; font-style: italic;">
+                        All tied with ${highestPoints} points
+                    </div>
+                </div>
+            `;
+        }
         
-        leaderHTML += `
+        const secondPlaceTeams = sortedTeams.filter(team => 
+            team.points < highestPoints && 
+            team.points === sortedTeams[topTeams.length]?.points
+        );
+        
+        const thirdPlaceTeams = sortedTeams.filter(team => 
+            team.points < highestPoints && 
+            team.points < secondPlaceTeams[0]?.points && 
+            team.points === sortedTeams[topTeams.length + secondPlaceTeams.length]?.points
+        );
+        
+        if (secondPlaceTeams.length > 0) {
+            leaderHTML += `
+                <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                    <span style="color: #6c757d;">🥈</span>
+                    <strong style="color: #6c757d;">2nd Place:</strong>
+                    ${secondPlaceTeams.map(team => 
+                        `<span style="margin-left: 10px;">${team.name} (${team.points} pts)</span>`
+                    ).join('')}
                 </div>
-                <div style="margin-top: 15px; color: #856404; font-style: italic;">
-                    All tied with ${highestPoints} points
+            `;
+        }
+        
+        if (thirdPlaceTeams.length > 0) {
+            leaderHTML += `
+                <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                    <span style="color: #cd7f32;">🥉</span>
+                    <strong style="color: #cd7f32;">3rd Place:</strong>
+                    ${thirdPlaceTeams.map(team => 
+                        `<span style="margin-left: 10px;">${team.name} (${team.points} pts)</span>`
+                    ).join('')}
                 </div>
-            </div>
-        `;
+            `;
+        }
+        
+        document.getElementById('currentLeader').innerHTML = leaderHTML;
     }
-    
-    // Show 2nd and 3rd place if they exist and are not tied for 1st
-    const secondPlaceTeams = sortedTeams.filter(team => 
-        team.points < highestPoints && 
-        team.points === sortedTeams[topTeams.length]?.points
-    );
-    
-    const thirdPlaceTeams = sortedTeams.filter(team => 
-        team.points < highestPoints && 
-        team.points < secondPlaceTeams[0]?.points && 
-        team.points === sortedTeams[topTeams.length + secondPlaceTeams.length]?.points
-    );
-    
-    if (secondPlaceTeams.length > 0) {
-        leaderHTML += `
-            <div style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                <span style="color: #6c757d;">🥈</span>
-                <strong style="color: #6c757d;">2nd Place:</strong>
-                ${secondPlaceTeams.map(team => 
-                    `<span style="margin-left: 10px;">${team.name} (${team.points} pts)</span>`
-                ).join('')}
-            </div>
-        `;
-    }
-    
-    if (thirdPlaceTeams.length > 0) {
-        leaderHTML += `
-            <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                <span style="color: #cd7f32;">🥉</span>
-                <strong style="color: #cd7f32;">3rd Place:</strong>
-                ${thirdPlaceTeams.map(team => 
-                    `<span style="margin-left: 10px;">${team.name} (${team.points} pts)</span>`
-                ).join('')}
-            </div>
-        `;
-    }
-    
-    document.getElementById('currentLeader').innerHTML = leaderHTML;
-}
 
     function updateTeamSelects() {
         const selects = ['newTeam1', 'newTeam2'];
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
+            if (!select) return;
             select.innerHTML = '<option value="">Select Team</option>';
             tournamentData.teams.forEach(team => {
                 const option = document.createElement('option');
@@ -2249,13 +2250,9 @@ function resetTeamConsideration() {
         }
 
         const sortedTeams = [...tournamentData.teams].sort((a, b) => {
-        // 1. First sort by points (higher points first)
-        if (b.points !== a.points) {
-            return b.points - a.points;
-        }
-        // 2. If points are equal, sort by matches played (fewer matches first)
-        return a.matches - b.matches;
-    });
+            if (b.points !== a.points) return b.points - a.points;
+            return a.matches - b.matches;
+        });
 
         const data = sortedTeams.map((team, index) => ({
             Position: index + 1,
@@ -2298,7 +2295,18 @@ function resetTeamConsideration() {
             reader.onload = function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
-                    tournamentData = importedData;
+                    tournamentData = {
+                        teams: importedData.teams || [],
+                        matches: importedData.matches || [],
+                        playoffMatches: importedData.playoffMatches || [],
+                        passwords: importedData.passwords || { admin: "admin123", viewer: "view123" },
+                        nextTeamId: importedData.nextTeamId || 1,
+                        nextMatchId: importedData.nextMatchId || 1,
+                        nextPlayoffMatchId: importedData.nextPlayoffMatchId || 1,
+                        seasonCompleted: importedData.seasonCompleted || false,
+                        playoffTeamsCount: importedData.playoffTeamsCount || 0,
+                        playoffStage: importedData.playoffStage || 'not_started'
+                    };
                     saveData();
                     alert('Tournament data imported successfully!');
                 } catch (error) {
@@ -2310,46 +2318,34 @@ function resetTeamConsideration() {
     });  
 
     // ==================== TABS & ROLE SELECTOR ====================
-  function showTab(tabName) {
-
-       if (tabName === 'admin') {
-        if (currentUser?.role !== 'admin') {
+    function showTab(tabName) {
+        if (tabName === 'admin' && currentUser?.role !== 'admin') {
             alert('Admin access required!');
             return;
         }
-        updateAdminUIState(); 
-    }
-      
-            if (tabName === 'admin' && currentUser?.role !== 'admin') {
-                alert('Admin access required!');
-                return;
-            }
-        
-            // Remove active class from all tab content and buttons
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-        
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-        
-            // Add active class to selected tab content
-            const tabContent = document.getElementById(tabName);
-            if (tabContent) {
-                tabContent.classList.add('active');
-            }
-        
-            // Add active class to the button corresponding to the tab
-            // Assumes button ID is tabName + 'Tab' (e.g., 'welcome' -> 'welcomeTab')
-            const tabButton = document.getElementById(tabName + 'Tab');
-            if (tabButton) {
-                tabButton.classList.add('active');
-            }
+    
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+    
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+    
+        const tabContent = document.getElementById(tabName);
+        if (tabContent) {
+            tabContent.classList.add('active');
         }
-
-
-
+    
+        const tabButton = document.getElementById(tabName + 'Tab');
+        if (tabButton) {
+            tabButton.classList.add('active');
+        }
+        
+        if (tabName === 'admin') {
+            updateAdminUIState();
+        }
+    }
 
     function setupEventListeners() {
         document.getElementById('viewerRole').addEventListener('click', () => selectRole('viewer'));
